@@ -1,0 +1,28 @@
+{if $foo}<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{$title}</title>
+</head>
+<body>
+{include header}
+
+<h1>{$title|enc}</h1>
+
+{if $listitems}
+<ol>
+    {for $listitems}
+    <li
+    {if $active} class="active"{else} class="inactive"{/if}>{$item}</li>
+    {/for}
+</ol>
+{/if}
+
+{for $bar inc=incblock}
+
+{if $hasFooter}
+<div>footer</div>
+{/if}
+
+</body>
+</html>{/if}
