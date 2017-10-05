@@ -40,9 +40,21 @@ public class ParserTest {
         List<Token> tokens = new Parser(TOKEN_CREATORS).parse("<html>\n{$value}\n</html>");
         testTokens(tokens);
 
+        tokens.forEach(System.out::println);
+
+        Assert.assertEquals(3, tokens.size());
+
         Assert.assertEquals(1, tokens.get(0).line);
         Assert.assertEquals(2, tokens.get(1).line);
         Assert.assertEquals(3, tokens.get(2).line);
+
+        Assert.assertEquals(Token.Literal.class, tokens.get(0).getClass());
+        Assert.assertEquals("<html>\n", tokens.get(0).contents);
+        Assert.assertEquals(Token.Variable.class, tokens.get(1).getClass());
+        Assert.assertEquals("{$value}", tokens.get(1).contents);
+        Assert.assertEquals("value", ((Token.Variable) tokens.get(1)).variableName);
+        Assert.assertEquals(Token.Literal.class, tokens.get(2).getClass());
+        Assert.assertEquals("\n</html>\n", tokens.get(2).contents);
     }
 
     @Test
@@ -79,6 +91,5 @@ public class ParserTest {
         Assert.assertTrue(tokens.get(1) instanceof Token.Variable);
         Assert.assertTrue(tokens.get(2) instanceof Token.Literal);
         Assert.assertEquals(((Token.Variable) tokens.get(1)).variableName, "value");
-
     }
 }
