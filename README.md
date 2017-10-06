@@ -16,7 +16,7 @@ source files in a pre-compile step.
 ## Supported markup
  
 * `{{placeholder}}`: creates a setter to assign a value for this placeholder
-* `{{placeholder|modifier1|modifier2}}`: encodes the value with the given modifiers
+* `{{placeholder|modifier1|modifier2}}`: encodes the value with the given modifiers (modifiers are string->string functions)
 * `{{*block}}...{{/block}}`: creates a subclass from the content that can be 
  assigned 0-n times 
 * `{{*block:com.example.mytemplate}}` or `{{*block}}{{+import:com.example.mytemplate}}{{/block}}`: 
