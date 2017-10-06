@@ -70,7 +70,7 @@ public class Parser {
 
     /**
      * Parses a line into a list of tokens. Single tokens may not span multiple lines, except
-     * for a LiteralToken, which, which might be combined
+     * for a LiteralToken, which might be combined
      *
      * @param line       the line to be parsed
      * @param lineNumber the line number for debugging purposes
@@ -94,7 +94,6 @@ public class Parser {
                 }
             }
 
-            // if nothing is found the remainder of the input must be a literal
             if (nextToken != null) {
                 tokens.add(new Token.Literal(line.substring(offs, nextToken.start), lineNumber, offs));
                 tokens.add(nextToken.create(lineNumber));
@@ -103,24 +102,28 @@ public class Parser {
                 break;
         }
 
-        tokens.add(new Token.Literal(line.substring(offs), lineNumber, offs));
+        // if nothing is found the remainder of the input must be a literal
+        tokens.add(new Token.Literal(line.substring(offs) + "\n", lineNumber, offs));
 
         return tokens;
     }
 
+    /**
+     * @param tokens the list of tokens
+     * @return a list of tokens where consecutive literals are joined together
+     */
     private List<Token> join(List<Token> tokens) {
-
         Stack<Token> joinedToken = new Stack<>();
 
         for (Token token : tokens) {
             if (token.contents.isEmpty()) {
-
+                // do nothing
             } else if (joinedToken.isEmpty()) {
                 joinedToken.push(token);
 
             } else if (joinedToken.peek() instanceof Token.Literal && token instanceof Token.Literal) {
                 Token top = joinedToken.pop();
-                joinedToken.push(new Token.Literal(top.contents + token.contents, top.line, top.offs));
+                joinedToken.push(new Token.Literal(top.contents + token.contents, token.line, top.offs));
 
             } else {
                 joinedToken.push(token);

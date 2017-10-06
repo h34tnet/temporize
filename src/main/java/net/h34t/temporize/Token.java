@@ -18,12 +18,16 @@ public abstract class Token {
 
     @Override
     public String toString() {
-        return String.format("@%5d|%5d %s (%s)", line, offs, this.getClass().getSimpleName(), contents.replace("\n", "\\n"));
+        return String.format("@%5d|%5d %s (%s)",
+                line,
+                offs,
+                this.getClass().getSimpleName(),
+                contents.replace("\n", "\\n"));
     }
 
     public static class Variable extends Token {
 
-        public static Pattern EXP = Pattern.compile("\\{\\$([\\w|]+)\\}");
+        public static Pattern EXP = Pattern.compile("\\{\\$([\\w|]+)}");
 
         public final String variableName;
         public final String[] modifiers;
@@ -62,7 +66,7 @@ public abstract class Token {
 
     public static class Block extends Token {
 
-        final static Pattern pattern = Pattern.compile("\\{for\\s+\\$(\\w+)\\}");
+        final static Pattern pattern = Pattern.compile("\\{for\\s+\\$(\\w+)}");
 
         public final String blockName;
 
@@ -87,13 +91,18 @@ public abstract class Token {
 
         @Override
         public String toString() {
-            return String.format("@%5d|%5d %s:%s (%s)", line, offs, this.getClass().getSimpleName(), this.blockName, contents.replace("\n", "\\n"));
+            return String.format("@%5d|%5d %s:%s (%s)",
+                    line,
+                    offs,
+                    this.getClass().getSimpleName(),
+                    this.blockName,
+                    contents.replace("\n", "\\n"));
         }
     }
 
     public static class BlockEnd extends Token {
 
-        public static final Pattern PATTERN = Pattern.compile("\\{/for\\}");
+        public static final Pattern PATTERN = Pattern.compile("\\{/for}");
 
         public BlockEnd(String contents, int line, int offs) {
             super(contents, line, offs);
@@ -116,7 +125,7 @@ public abstract class Token {
 
     public static class Include extends Token {
 
-        public static final Pattern PATTERN = Pattern.compile("\\{include\\s+(\\w+)\\}");
+        public static final Pattern PATTERN = Pattern.compile("\\{\\+include\\s+(\\w+)}");
 
         public final String includeName;
 
@@ -147,7 +156,7 @@ public abstract class Token {
 
     public static class Conditional extends Token {
 
-        public static final Pattern PATTERN = Pattern.compile("\\{if\\s+\\$(\\w+)\\}");
+        public static final Pattern PATTERN = Pattern.compile("\\{if\\s+\\$(\\w+)}");
 
         private final String conditionalVariable;
 
@@ -178,7 +187,7 @@ public abstract class Token {
 
     public static class ConditionalElse extends Token {
 
-        public static final Pattern PATTERN = Pattern.compile("\\{else\\}");
+        public static final Pattern PATTERN = Pattern.compile("\\{else}");
 
         public ConditionalElse(String contents, int line, int offs) {
             super(contents, line, offs);
@@ -201,7 +210,7 @@ public abstract class Token {
 
     public static class ConditionalEnd extends Token {
 
-        public static final Pattern PATTERN = Pattern.compile("\\{\\/if\\}");
+        public static final Pattern PATTERN = Pattern.compile("\\{/if}");
 
         public ConditionalEnd(String contents, int line, int offs) {
             super(contents, line, offs);

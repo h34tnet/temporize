@@ -1,12 +1,12 @@
 # Temporize
 
-Temporize is a template engine for java that turns textual templates into java class 
-source files in a pre-compile step.
+Temporize is a template engine for java that compiles textual templates into java 
+source files, which can then be used from your code.
 
 ## Why + advantages
 
 * Speed
-* No IO during runtime (i.e. no blocking, IO is done soley during the compilation step)
+* No IO during runtime (i.e. no blocking, IO is done only during the compilation step)
 * IDE auto-completion support
  
 ## Downsides
@@ -16,12 +16,14 @@ source files in a pre-compile step.
 ## Supported markup
  
 * `{{placeholder}}`: creates a setter to assign a value for this placeholder
-* `{{placeholder|modifier1|modifier2}}`: encodes the value with the given modifiers (modifiers are string->string functions)
-* `{{*block}}...{{/block}}`: creates a subclass from the content that can be 
+* `{{placeholder|modifier1|modifier2}}`: encodes the value with the given modifiers.
+  Modifiers are String->String functions.
+* `{{*block}}...{{/*}}`: creates a subclass from the content that can be 
  assigned 0-n times 
-* `{{*block:com.example.mytemplate}}` or `{{*block}}{{+import:com.example.mytemplate}}{{/block}}`: 
+* `{{*block:com.example.mytemplate}}` or `{{*block}}{{+import:com.example.mytemplate}}{{/*}}`: 
  imports a different template here
 * `{{if condition}}...{{/if}}`: creates a conditional
+* `{{if condition}}...{{else}}...{{/if}}`: creates a conditional with an else block
 
 ## Example
 
@@ -36,19 +38,21 @@ Template `tpl/index/myTemplate.html`:
       {{if showIntroduction}}<div>{{introduction|html}}</div>{{/if}}
       {{if point}} 
       <ul>
-      {{*point}}<li><a href="/{{target|urlenc}}">{{text|html}}</a></li>{{/point}}
+      {{*point}}<li><a href="/{{target|urlenc}}">{{text|html}}</a></li>{{/*}}
       </ul>
       {{/if}}
       {{+import:assoc/footer}}
     </body>
     </html>
     
-Compile this to the target src-gen directory and this creates a 
-class `template/index/MyTemplate.java` with the fully qualified name 
+Compile this to the target src-gen directory with the "template" top level namespace 
+and this creates a class `template/index/MyTemplate.java` with the fully qualified name 
 `template.index.MyTemplate`.
 
-The class might look something like this:
+The generated code might look something like this:
 
+    package template.template.index; 
+    
     class MyTemplate {
         private String title;
         private String headline;
@@ -63,12 +67,25 @@ The class might look something like this:
         ...
         public MyTemplate showIntroduction(boolean showIntroduction) {...}
         public MyTemplate setPointList(Collection<Point> pointList) {...}
-        public MyTemplate setFooter(templates.assoc.Footer footer) {...}
+        public MyTemplate setFooter(template.assoc.Footer footer) {...}
         ...
         public MyTemplate write(Writer writer) {...}
         ...
         @Override
-        public String toString() {...}
+        public String toString() {
+            StringBuilder sb = new StringBuilder()
+            sb.append("<html>\n    <head>\n      <title>");
+            sb.append(TemporizeFn.html(this.headline));
+            sb.append("</title>\n    </head>");
+            ...
+            if (this.showIntroduction) {
+                sb.append("<div>");
+                sb.append(TemporizeFn.html(this.introduction));
+                sb.append("</div>");
+            }
+            ...
+            sb.toString();
+        }
         
         public static class Point {
             public Point() {}
@@ -105,7 +122,7 @@ in your code you could do:
 
 * TODO
 * It's fast.
-* Compilation is not as fast but that doesn't really matter because it happens at 
+* Compilation may not as fast but that doesn't really matter because it happens at 
  project compile time anyway.
 * Packaging and distributing the compiled templates is easy. There is no need to 
  package the original template sources.
@@ -113,5 +130,4 @@ in your code you could do:
 ## How to compile
 
 * Call manually: `java -jar temporize.jar tpl/ src_gen/`
-* As a pre-compilation step
-* Gradle Plugin (todo)
+* Maven/Gradle Plugin (todo)
