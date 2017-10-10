@@ -33,27 +33,11 @@ public class Parser {
     }
 
     public List<Token> parse(File file) throws IOException {
-        List<Token> tokens = new ArrayList<>();
-
-        try (LineNumberReader reader = new LineNumberReader(new FileReader(file))) {
-            String line;
-            while ((line = reader.readLine()) != null)
-                tokens.addAll(parseLine(line, reader.getLineNumber()));
-
-            return join(tokens);
-        }
+        return parse(new FileInputStream(file));
     }
 
     public List<Token> parse(String contents) throws IOException {
-        List<Token> tokens = new ArrayList<>();
-
-        try (LineNumberReader reader = new LineNumberReader(new StringReader(contents))) {
-            String line;
-            while ((line = reader.readLine()) != null)
-                tokens.addAll(parseLine(line, reader.getLineNumber()));
-
-            return join(tokens);
-        }
+        return parse(new ByteArrayInputStream(contents.getBytes()));
     }
 
     public List<Token> parse(InputStream is) throws IOException {
@@ -103,7 +87,7 @@ public class Parser {
         }
 
         // if nothing is found the remainder of the input must be a literal
-        tokens.add(new Token.Literal(line.substring(offs) + "\n", lineNumber, offs));
+        tokens.add(new Token.Literal(line.substring(offs), lineNumber, offs));
 
         return tokens;
     }
@@ -118,6 +102,7 @@ public class Parser {
         for (Token token : tokens) {
             if (token.contents.isEmpty()) {
                 // do nothing
+                
             } else if (joinedToken.isEmpty()) {
                 joinedToken.push(token);
 
