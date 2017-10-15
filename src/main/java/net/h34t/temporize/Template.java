@@ -14,6 +14,6 @@ public class Template {
 
     @Override
     public String toString() {
-        return packageName + ": " + className + "\n\n" + code + "\n\n";
+        return code;
     }
 }

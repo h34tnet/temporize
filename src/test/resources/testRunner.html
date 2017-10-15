@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{$title}</title>
+</head>
+<body>
+{+include:
+<h1>{$title}</h1>
+{if $authors}
+written by:
+<ul>
+    {for $authors}
+    {if $link}
+    <li><a href="{$link}">{$name}</a></li>
+    {else}
+    <li>{$name}</li>
+    {/if}
+    {/for}
+</ul>
+{else}
+no authors
+{/if}
+{if $intro}
+{$intro}
+{/if}
+
+</body>
+</html>

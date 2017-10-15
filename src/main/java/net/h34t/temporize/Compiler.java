@@ -65,18 +65,18 @@ public class Compiler {
         }
     }
 
-    static String createVariableSetter(String className, String name) {
-        return "    public " + className + " set" + toClassName(name) + "(String " + name + ") {\n" +
-                "        this." + name + " = " + name + ";\n" +
-                "        return this;\n" +
-                "    }";
+    static String createVariableSetter(String className, String name, int ident) {
+        return Ident.of(ident) + "    public " + className + " set" + toClassName(name) + "(String " + name + ") {\n" +
+                Ident.of(ident) + "        this." + name + " = " + name + ";\n" +
+                Ident.of(ident) + "        return this;\n" +
+                Ident.of(ident) + "    }";
     }
 
-    static String createBlockSetter(String className, ASTNode.Block block) {
-        return "    public " + className + " set" + block.blockClassName + "(List<" + block.blockClassName + "> " + block.blockName + ") {\n" +
-                "        this." + block.blockName + " = " + block.blockName + ";\n" +
-                "        return this;\n" +
-                "    }";
+    static String createBlockSetter(String className, ASTNode.Block block, int ident) {
+        return Ident.of(ident) + "    public " + className + " set" + block.blockClassName + "(List<" + block.blockClassName + "> " + block.blockName + ") {\n" +
+                Ident.of(ident) + "        this." + block.blockName + " = " + block.blockName + ";\n" +
+                Ident.of(ident) + "        return this;\n" +
+                Ident.of(ident) + "    }";
     }
 
     static String createOutput(ASTNode node, int ident) {
@@ -87,30 +87,30 @@ public class Compiler {
             return createOutput(node.next(), ident);
         }
         if (node instanceof ASTNode.ConstantValue) {
-            return Ident.of(ident + 2) + "sb.append(\"" + StringEscapeUtils.escapeJava(((ASTNode.ConstantValue) node).value) + "\");\n"
+            return Ident.of(ident) + "sb.append(\"" + StringEscapeUtils.escapeJava(((ASTNode.ConstantValue) node).value) + "\");\n"
                     + createOutput(node.next(), ident);
 
         } else if (node instanceof ASTNode.Variable) {
-            return Ident.of(ident + 2) + "sb.append(this." + ((ASTNode.Variable) node).name + ");\n"
+            return Ident.of(ident) + "sb.append(this." + ((ASTNode.Variable) node).name + ");\n"
                     + createOutput(node.next(), ident);
 
         } else if (node instanceof ASTNode.Conditional) {
             StringBuilder sb = new StringBuilder();
-            sb.append("\n").append(Ident.of(ident + 2)).append("if (this.").append(((ASTNode.Conditional) node).name).append(" != null && !").append(((ASTNode.Conditional) node).name).append(".isEmpty()) {\n");
+            sb.append("\n").append(Ident.of(ident)).append("if (this.").append(((ASTNode.Conditional) node).name).append(" != null && !").append(((ASTNode.Conditional) node).name).append(".isEmpty()) {\n");
             sb.append(createOutput(((ASTNode.Conditional) node).consequent, ident + 1));
 
             if (((ASTNode.Conditional) node).alternative != null) {
-                sb.append("\n").append(Ident.of(ident + 2)).append("} else {\n");
+                sb.append("\n").append(Ident.of(ident)).append("} else {\n");
                 sb.append(createOutput(((ASTNode.Conditional) node).alternative, ident + 1));
             }
 
-            sb.append(Ident.of(ident + 2)).append("}\n\n");
+            sb.append(Ident.of(ident)).append("}\n\n");
             return sb.toString() + createOutput(node.next(), ident);
 
         } else if (node instanceof ASTNode.Block) {
             StringBuilder sb = new StringBuilder();
-            sb.append("\n").append(Ident.of(ident + 2) + "for (" + ((ASTNode.Block) node).blockClassName + " block : " + ((ASTNode.Block) node).blockName + "List)\n");
-            sb.append(Ident.of(ident + 3) + "sb.append(block.toString());\n");
+            sb.append("\n").append(Ident.of(ident) + "for (" + ((ASTNode.Block) node).blockClassName + " _block : " + ((ASTNode.Block) node).blockName + "List)\n");
+            sb.append(Ident.of(ident + 1) + "sb.append(_block.toString());\n");
             return sb.toString();
 
         } else {
@@ -120,6 +120,11 @@ public class Compiler {
     }
 
     public Template compile(String packageName, String className, ASTNode root) {
+        return compile(packageName, className, root, 0);
+    }
+
+
+    Template compile(String packageName, String className, ASTNode root, int ident) {
         List<ASTNode.Variable> variables = getVariables(root).stream()
                 .distinct()
                 .collect(Collectors.toList());
@@ -131,45 +136,71 @@ public class Compiler {
 
         List<ASTNode.Block> blocks = getBlocks(root);
 
+        List<String> constructorInitializers =
+                variables.stream().map(v -> "String " + v.name)
+                        .collect(Collectors.toList());
+
+        constructorInitializers.addAll(blocks.stream()
+                .map(b -> "List<" + b.blockClassName + "> " + b.blockName).collect(Collectors.toList()));
+
+
         StringBuilder sb = new StringBuilder();
-        if (packageName != null)
+        if (packageName != null) {
             sb.append("package ").append(packageName).append(";\n\n");
-        sb.append("public " + (packageName != null ? "" : "static ") + "class ").append(className).append(" {\n\n");
+            sb.append("import java.util.List;\n\n");
+        }
 
+        sb.append(Ident.of(ident)).append("public " + (packageName != null ? "" : "static ") + "class ").append(className).append(" {\n\n");
+
+        // variable property definitions
         for (String var : variableNames)
-            sb.append("    private String ").append(var).append(";\n");
+            sb.append(Ident.of(ident)).append("    private String ").append(var).append(";\n");
 
+        // block property definitions
         for (ASTNode.Block block : blocks)
-            sb.append("    private List<").append(block.blockClassName).append("> ").append(block.blockName).append(";\n");
+            sb.append(Ident.of(ident)).append("    private List<").append(block.blockClassName).append("> ").append(block.blockName).append(";\n");
 
         sb.append("\n");
 
-        sb.append("    public ").append(className).append("() {\n");
-        sb.append("    }\n\n");
+        // empty constructor
+        sb.append(Ident.of(ident)).append("    public ").append(className).append("() {\n");
+        sb.append(Ident.of(ident)).append("    }\n\n");
 
 
-        sb.append("    public ").append(className).append("(");
-        sb.append(variableNames.stream().map(v -> "String " + v).collect(Collectors.joining(", ")));
-        sb.append(") {\n");
-        variableNames.forEach(v -> sb.append("        this.").append(v).append(" = ").append(v).append(";\n"));
-        sb.append("    }\n\n");
+        // full constructor
+        sb.append(Ident.of(ident)).append("    public ").append(className).append("(");
+        sb.append(constructorInitializers.stream()
+                .collect(Collectors.joining(", ")))
+                .append(") {\n");
+        variableNames.forEach(v -> sb.append(Ident.of(ident + 2)).append("this.").append(v).append(" = ").append(v).append(";\n"));
+        blocks.forEach(b -> sb.append(Ident.of(ident + 2)).append("this.").append(b.blockName).append(" = ").append(b.blockName).append(";\n"));
+        sb.append(Ident.of(ident + 1)).append("}\n\n");
 
+        // variable setters
         for (String var : variableNames)
-            sb.append(createVariableSetter(className, var)).append("\n\n");
+            sb.append(createVariableSetter(className, var, ident)).append("\n\n");
 
+        // block setters
         for (ASTNode.Block block : blocks)
-            sb.append(createBlockSetter(className, block)).append("\n\n");
+            sb.append(Ident.of(ident)).append(createBlockSetter(className, block, ident)).append("\n\n");
 
-        sb.append("    @Override\n");
-        sb.append("    public String toString() {\n");
-        sb.append("        StringBuilder sb = new StringBuilder();\n");
+        // output body
+        sb.append(Ident.of(ident)).append("    @Override\n");
+        sb.append(Ident.of(ident)).append("    public String toString() {\n");
+        sb.append(Ident.of(ident)).append("        StringBuilder sb = new StringBuilder();\n");
 
-        sb.append(createOutput(root, 0));
+        sb.append(createOutput(root, ident + 2));
 
-        sb.append("\n");
-        sb.append("        return sb.toString();\n");
-        sb.append("    }\n");
-        sb.append("}");
+        sb.append(Ident.of(ident)).append("\n");
+        sb.append(Ident.of(ident)).append("        return sb.toString();\n");
+        sb.append(Ident.of(ident)).append("    }\n");
+
+        for (ASTNode.Block block : blocks) {
+
+            sb.append("\n").append(compile(null, block.blockClassName, block.branch, ident + 1));
+        }
+
+        sb.append(Ident.of(ident)).append("}\n");
 
         return new Template(
                 packageName,
