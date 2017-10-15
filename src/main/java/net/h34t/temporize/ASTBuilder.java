@@ -51,7 +51,7 @@ public class ASTBuilder {
                 current = stack.pop();
 
             } else if (token instanceof Token.Conditional) {
-                ASTNode.Conditional conditional = new ASTNode.Conditional(previous, token.contents);
+                ASTNode.Conditional conditional = new ASTNode.Conditional(previous, ((Token.Conditional) token).conditionalVariable);
                 previous.setNext(conditional);
 
                 ASTNode consequence = new ASTNode.NoOp(conditional);

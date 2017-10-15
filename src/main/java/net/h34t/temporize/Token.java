@@ -158,7 +158,7 @@ public abstract class Token {
 
         public static final Pattern PATTERN = Pattern.compile("\\{if\\s+\\$(\\w+)}");
 
-        private final String conditionalVariable;
+        public final String conditionalVariable;
 
         public Conditional(String contents, String conditionalVariable, int line, int offs) {
             super(contents, line, offs);

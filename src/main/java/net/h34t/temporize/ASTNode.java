@@ -23,6 +23,10 @@ public abstract class ASTNode implements Iterator<ASTNode> {
         return sb.toString();
     }
 
+    public static String toClassName(String name) {
+        return name.substring(0, 1).toUpperCase() + name.substring(1);
+    }
+
     public ASTNode getNext() {
         return next;
     }
@@ -50,7 +54,7 @@ public abstract class ASTNode implements Iterator<ASTNode> {
     @Override
     public void forEachRemaining(Consumer<? super ASTNode> action) {
         action.accept(this);
-        
+
         if (this.next != null)
             next.forEachRemaining(action);
     }
@@ -128,11 +132,14 @@ public abstract class ASTNode implements Iterator<ASTNode> {
     public static class Block extends ASTNode {
 
         public final String blockName;
+        public final String blockClassName;
+
         public ASTNode branch;
 
         public Block(ASTNode prev, String blockName) {
             super(prev);
             this.blockName = blockName;
+            this.blockClassName = ASTNode.toClassName(blockName);
         }
 
         public void setBranch(ASTNode branch) {
