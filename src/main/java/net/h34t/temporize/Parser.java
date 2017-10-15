@@ -9,27 +9,20 @@ import java.util.regex.Matcher;
 
 public class Parser {
 
+    public static final Parser FULL = new Parser(new Token.Creator[]{
+            Token.Variable.getCreator(),
+            Token.Block.getCreator(),
+            Token.BlockEnd.getCreator(),
+            Token.Include.getCreator(),
+            Token.Conditional.getCreator(),
+            Token.ConditionalElse.getCreator(),
+            Token.ConditionalEnd.getCreator()
+    });
+
     private final Token.Creator[] creators;
 
     public Parser(Token.Creator[] creators) {
         this.creators = creators;
-    }
-
-    public static void main(String... args) throws IOException {
-
-        Token.Creator[] tokenCreators = new Token.Creator[]{
-                Token.Variable.getCreator(),
-                Token.Block.getCreator(),
-                Token.BlockEnd.getCreator(),
-                Token.Include.getCreator(),
-                Token.Conditional.getCreator(),
-                Token.ConditionalElse.getCreator(),
-                Token.ConditionalEnd.getCreator()
-        };
-
-        List<Token> tokens = new Parser(tokenCreators).parse(new File("tpl/test.html"));
-
-        tokens.forEach(System.out::println);
     }
 
     public List<Token> parse(File file) throws IOException {
@@ -103,7 +96,7 @@ public class Parser {
         }
 
         // if nothing is found the remainder of the input must be a literal
-        tokens.add(new Token.Literal(line.substring(offs) + "\n", lineNumber, offs));
+        tokens.add(new Token.Literal(line.substring(offs), lineNumber, offs));
 
         return tokens;
     }

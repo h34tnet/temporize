@@ -1,31 +1,80 @@
 package net.h34t.temporize;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
-public abstract class ASTNode {
+public abstract class ASTNode implements Iterator<ASTNode> {
 
-    public ASTNode() {
+    private final ASTNode prev;
+    private ASTNode next;
+
+    public ASTNode(ASTNode prev) {
+        this.prev = prev;
     }
 
+    private static String ident(int times) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < times; i++)
+            sb.append("    ");
 
-    public static class BooleanValue {
+        return sb.toString();
+    }
 
-        public final String variableName;
+    public ASTNode getNext() {
+        return next;
+    }
 
-        public BooleanValue(String variableName) {
-            this.variableName = variableName;
+    public void setNext(ASTNode next) {
+        this.next = next;
+    }
+
+    public ASTNode getPrev() {
+        return prev;
+    }
+
+    public abstract String print(int identation);
+
+    @Override
+    public boolean hasNext() {
+        return this.next != null;
+    }
+
+    @Override
+    public ASTNode next() {
+        return this.next;
+    }
+
+    @Override
+    public void forEachRemaining(Consumer<? super ASTNode> action) {
+        action.accept(this);
+        
+        if (this.next != null)
+            next.forEachRemaining(action);
+    }
+
+    public static class NoOp extends ASTNode {
+        public NoOp(ASTNode prev) {
+            super(prev);
+        }
+
+        @Override
+        public String print(int identation) {
+            return (getNext() != null) ? getNext().print(identation) : "";
         }
     }
 
     public static class Conditional extends ASTNode {
 
-        public final BooleanValue condition;
+        public final String name;
         public ASTNode consequent;
         public ASTNode alternative;
 
-        public Conditional(BooleanValue condition) {
-            this.condition = condition;
+        public Conditional(ASTNode prev, String name) {
+            super(prev);
+            this.name = name;
         }
 
         public void setConsequent(ASTNode consequent) {
@@ -36,19 +85,21 @@ public abstract class ASTNode {
             this.alternative = alternative;
         }
 
-    }
+        @Override
+        public String print(int identation) {
+            StringBuilder output = new StringBuilder();
+            output.append(ident(identation) + "if " + name + "\n");
+            output.append(consequent.print(identation + 1));
 
-    public static class Sequence extends ASTNode {
+            if (alternative != null) {
+                output.append(ident(identation) + "else\n");
+                output.append(alternative.print(identation + 1));
+            }
 
-        public final List<ASTNode> nodes;
+            if (getNext() != null)
+                output.append(getNext().print(identation));
 
-        public Sequence() {
-            this.nodes = new ArrayList<>();
-        }
-
-        public Sequence add(ASTNode node) {
-            this.nodes.add(node);
-            return this;
+            return output.toString();
         }
     }
 
@@ -57,20 +108,46 @@ public abstract class ASTNode {
         public final String name;
         public final List<String> modifiers;
 
-        public Variable(String name, List<String> modifiers) {
+        public Variable(ASTNode prev, String name, List<String> modifiers) {
+            super(prev);
             this.name = name;
             this.modifiers = new ArrayList<>(modifiers);
+        }
+
+        @Override
+        public String print(int identation) {
+            String output = ident(identation) + "$" + name + ":" + modifiers.stream().collect(Collectors.joining("|")) + "\n";
+
+            if (getNext() != null)
+                output += getNext().print(identation);
+
+            return output;
         }
     }
 
     public static class Block extends ASTNode {
 
         public final String blockName;
-        public ASTNode node;
+        public ASTNode branch;
 
-        public Block(String blockName, ASTNode node) {
+        public Block(ASTNode prev, String blockName) {
+            super(prev);
             this.blockName = blockName;
-            this.node = node;
+        }
+
+        public void setBranch(ASTNode branch) {
+            this.branch = branch;
+        }
+
+        @Override
+        public String print(int identation) {
+            StringBuilder output = new StringBuilder();
+            output.append(ident(identation) + "for " + blockName + ":\n");
+            output.append(branch.print(identation + 1));
+            if (getNext() != null)
+                output.append(getNext().print(identation));
+
+            return output.toString();
         }
     }
 
@@ -78,8 +155,19 @@ public abstract class ASTNode {
 
         public final String filename;
 
-        public Include(String filename) {
+        public Include(ASTNode prev, String filename) {
+            super(prev);
             this.filename = filename;
+        }
+
+        @Override
+        public String print(int identation) {
+            String output = ident(identation) + "include(" + filename + ")\n";
+
+            if (getNext() != null)
+                output += getNext().print(identation);
+
+            return output;
         }
     }
 
@@ -87,8 +175,19 @@ public abstract class ASTNode {
 
         public final String value;
 
-        public ConstantValue(String value) {
+        public ConstantValue(ASTNode prev, String value) {
+            super(prev);
             this.value = value;
+        }
+
+        @Override
+        public String print(int identation) {
+            String output = ident(identation) + "\"" + value + "\"\n";
+
+            if (getNext() != null)
+                output += getNext().print(identation);
+
+            return output;
         }
     }
 }
