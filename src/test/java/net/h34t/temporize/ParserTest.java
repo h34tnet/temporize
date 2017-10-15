@@ -4,9 +4,10 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by Stefan Schallerl on 25.09.2016.
@@ -23,11 +24,16 @@ public class ParserTest {
             Token.ConditionalEnd.getCreator()
     };
 
-    public static final File RESOURCES_DIRECTORY = new File("src/test/resources");
+    static InputStream getResource(String name) {
+        return Thread.currentThread()
+                .getContextClassLoader()
+                .getResourceAsStream(name);
+    }
 
     @Test
     public void testParseFile() throws Exception {
-        List<Token> tokens = new Parser(TOKEN_CREATORS).parse(new File(RESOURCES_DIRECTORY, "testParse.html"));
+        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("testParse.html");
+        List<Token> tokens = new Parser(TOKEN_CREATORS).parse(is);
         testTokens(tokens);
 
         Assert.assertEquals(1, tokens.get(0).line);
@@ -50,9 +56,11 @@ public class ParserTest {
 
         Assert.assertEquals(Token.Literal.class, tokens.get(0).getClass());
         Assert.assertEquals("<html>\n", tokens.get(0).contents);
+
         Assert.assertEquals(Token.Variable.class, tokens.get(1).getClass());
         Assert.assertEquals("{$value}", tokens.get(1).contents);
         Assert.assertEquals("value", ((Token.Variable) tokens.get(1)).variableName);
+
         Assert.assertEquals(Token.Literal.class, tokens.get(2).getClass());
         Assert.assertEquals("\n</html>\n", tokens.get(2).contents);
     }
@@ -79,17 +87,28 @@ public class ParserTest {
 
         Token.Variable v = (Token.Variable) tokens.get(1);
 
-        Assert.assertEquals(v.variableName, "value");
-        Assert.assertEquals(v.modifiers[0], "foo");
-        Assert.assertEquals(v.modifiers[1], "bar");
-        Assert.assertEquals(v.modifiers.length, 2);
+        Assert.assertEquals("value", v.variableName);
+        Assert.assertEquals("foo", v.modifiers[0]);
+        Assert.assertEquals("bar", v.modifiers[1]);
+        Assert.assertEquals(2, v.modifiers.length);
     }
 
     public void testTokens(List<Token> tokens) {
-        Assert.assertEquals(tokens.size(), 3);
+        Assert.assertEquals(3, tokens.size());
         Assert.assertTrue(tokens.get(0) instanceof Token.Literal);
         Assert.assertTrue(tokens.get(1) instanceof Token.Variable);
         Assert.assertTrue(tokens.get(2) instanceof Token.Literal);
-        Assert.assertEquals(((Token.Variable) tokens.get(1)).variableName, "value");
+        Assert.assertEquals("value", ((Token.Variable) tokens.get(1)).variableName);
+    }
+
+    @Test
+    public void testParseConditionals() throws IOException {
+
+        List<Token> tokens = new Parser(TOKEN_CREATORS)
+                .parse(getResource("testParseConditionals.html"));
+
+        Assert.assertEquals(9, tokens.size());
+
+        System.out.println(tokens.stream().map(Token::toString).collect(Collectors.joining("\n")));
     }
 }
