@@ -15,15 +15,15 @@ source files, which can then be used from your code.
  
 ## Supported markup
  
-* `{{placeholder}}`: creates a setter to assign a value for this placeholder
-* `{{placeholder|modifier1|modifier2}}`: encodes the value with the given modifiers.
+* `{$placeholder}`: creates a setter to assign a value for this placeholder
+* `{$placeholder|modifier1|modifier2}`: encodes the value with the given modifiers.
   Modifiers are String->String functions.
-* `{{*block}}...{{/*}}`: creates a subclass from the content that can be 
+* `{for block}...{/for}`: creates a subclass from the content that can be 
  assigned 0-n times 
-* `{{*block:com.example.mytemplate}}` or `{{*block}}{{+import:com.example.mytemplate}}{{/*}}`: 
+* `{for block:com.example.mytemplate}` or `{for block}{+import:com.example.mytemplate}{/*}`: 
  imports a different template here
-* `{{if condition}}...{{/if}}`: creates a conditional
-* `{{if condition}}...{{else}}...{{/if}}`: creates a conditional with an else block
+* `{if condition}...{/if}`: creates a conditional
+* `{if condition}...{else}...{/if}`: creates a conditional with an else block
 
 ## Example
 
@@ -31,17 +31,17 @@ Template `tpl/index/myTemplate.html`:
 
     <html>
     <head>
-      <title>{{title|html}}</title>
+      <title>{title|html}</title>
     </head>
     <body>
-      <h1>{{headline|stripnl|html}}</h1>
-      {{if showIntroduction}}<div>{{introduction|html}}</div>{{/if}}
-      {{if point}} 
+      <h1>{headline|stripnl|html}</h1>
+      {if showIntroduction}<div>{introduction|html}</div>{/if}
+      {if point} 
       <ul>
-      {{*point}}<li><a href="/{{target|urlenc}}">{{text|html}}</a></li>{{/*}}
+      {*point}<li><a href="/{target|urlenc}">{text|html}</a></li>{/*}
       </ul>
-      {{/if}}
-      {{+import:assoc/footer}}
+      {/if}
+      {+import:assoc/footer}
     </body>
     </html>
     

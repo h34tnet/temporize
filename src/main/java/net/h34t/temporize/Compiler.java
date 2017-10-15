@@ -2,6 +2,7 @@ package net.h34t.temporize;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Compiler {
 
@@ -38,15 +39,35 @@ public class Compiler {
 
     public String compile(String packageName, String className, ASTNode root) {
         // for
-        List<ASTNode.Variable> variables = getVariables(root);
+        List<ASTNode.Variable> variables = getVariables(root).stream()
+                .distinct()
+                .collect(Collectors.toList());
+
+        List<String> variableNames = variables.stream().map(v -> v.name).distinct().collect(Collectors.toList());
 
         StringBuilder sb = new StringBuilder();
+        if (packageName != null)
+            sb.append("package ").append(packageName).append(";\n\n");
+        sb.append("public class ").append(className).append(" {\n\n");
 
-        sb.append("public class ").append(className).append("{\n\n");
-        for (ASTNode.Variable var : variables)
-            sb.append("    private final String ").append(var.name).append(";\n");
+        for (String var : variableNames)
+            sb.append("    private String ").append(var).append(";\n");
+
+        sb.append("\n");
+
+        sb.append("    public " + className + "() {\n");
+        sb.append("    }\n\n");
+
+
+        sb.append("    public " + className + "(");
+        sb.append(variableNames.stream().map(v -> "String " + v).collect(Collectors.joining(", ")));
+        sb.append(") {\n");
+        variableNames.forEach(v -> sb.append("        this.").append(v).append(" = ").append(v).append(";\n"));
+        sb.append("    }\n\n");
+
 
         sb.append("}");
+
 
         return sb.toString();
     }
