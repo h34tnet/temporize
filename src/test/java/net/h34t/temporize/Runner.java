@@ -11,10 +11,10 @@ public class Runner {
 
     @Test
     public void testRunner() throws IOException {
-        generate(new File("tpl"), "index.Index", new File("tpl-gen"));
+        generate(new File("tpl"), "index.Index", new File("tpl-gen"), "net.Modifiers.*");
     }
 
-    public void generate(File templateBaseDirectory, String fullName, File outputDirectory) throws IOException {
+    public void generate(File templateBaseDirectory, String fullName, File outputDirectory, String modifiers) throws IOException {
         File filePath = new File(fullName.replaceAll("\\.", "/"));
         String packageName = filePath.getParent();
         String fileName = filePath.getName();
@@ -23,9 +23,9 @@ public class Runner {
 
         List<Token> tokens = Parser.FULL.parse(file);
         ASTNode root = new ASTBuilder().build(tokens);
-        Template tpl = new Compiler().compile(packageName, fileName, root, include -> {
+        Template tpl = new Compiler().compile(packageName, fileName, modifiers, root, include -> {
             try {
-                generate(templateBaseDirectory, include, outputDirectory);
+                generate(templateBaseDirectory, include, outputDirectory, modifiers);
             } catch (IOException e) {
                 e.printStackTrace();
             }

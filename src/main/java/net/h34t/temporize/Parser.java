@@ -26,20 +26,24 @@ public class Parser {
     }
 
     public List<Token> parse(File file) throws IOException {
-        return parse(new FileInputStream(file));
+        return parse(file.getName(), new FileInputStream(file));
     }
 
     public List<Token> parse(String contents) throws IOException {
-        return parse(new ByteArrayInputStream(contents.getBytes()));
+        return parse("?string", new ByteArrayInputStream(contents.getBytes()));
     }
 
     public List<Token> parse(InputStream is) throws IOException {
+        return parse("?stream", is);
+    }
+
+    public List<Token> parse(String source, InputStream is) throws IOException {
         List<Token> tokens = new ArrayList<>();
 
         try (LineNumberReader reader = new LineNumberReader(new InputStreamReader(is))) {
             String line;
             while ((line = reader.readLine()) != null)
-                tokens.addAll(parseLine(line + "\n", reader.getLineNumber()));
+                tokens.addAll(parseLine(line + "\n", source, reader.getLineNumber()));
 
             return join(tokens);
         }
@@ -54,6 +58,10 @@ public class Parser {
      * @return a list of tokens
      */
     protected List<Token> parseLine(String line, int lineNumber) {
+        return parseLine("?line", line, lineNumber);
+    }
+
+    protected List<Token> parseLine(String line, String source, int lineNumber) {
         List<Token> tokens = new ArrayList<>();
 
         int offs = 0;
@@ -72,15 +80,15 @@ public class Parser {
             }
 
             if (nextToken != null) {
-                tokens.add(new Token.Literal(line.substring(offs, nextToken.start), lineNumber, offs));
-                tokens.add(nextToken.create(lineNumber));
+                tokens.add(new Token.Literal(line.substring(offs, nextToken.start), source, lineNumber, offs));
+                tokens.add(nextToken.create(source, lineNumber));
                 offs = nextToken.end;
             } else
                 break;
         }
 
         // if nothing is found the remainder of the input must be a literal
-        tokens.add(new Token.Literal(line.substring(offs), lineNumber, offs));
+        tokens.add(new Token.Literal(line.substring(offs), source, lineNumber, offs));
 
         return tokens;
     }
@@ -93,18 +101,18 @@ public class Parser {
         Stack<Token> joinedToken = new Stack<>();
 
         for (Token token : tokens) {
-            if (token.contents.isEmpty()) {
-                // do nothing
-                
-            } else if (joinedToken.isEmpty()) {
-                joinedToken.push(token);
+            if (!token.contents.isEmpty()) {
+                if (joinedToken.isEmpty()) {
+                    joinedToken.push(token);
 
-            } else if (joinedToken.peek() instanceof Token.Literal && token instanceof Token.Literal) {
-                Token top = joinedToken.pop();
-                joinedToken.push(new Token.Literal(top.contents + token.contents, token.line, top.offs));
+                } else if (joinedToken.peek() instanceof Token.Literal && token instanceof Token.Literal) {
+                    // if both are literals, they can be joined. the line number is taken from the lower one.
+                    Token top = joinedToken.pop();
+                    joinedToken.push(new Token.Literal(top.contents + token.contents, token.source, token.line, top.offs));
 
-            } else {
-                joinedToken.push(token);
+                } else {
+                    joinedToken.push(token);
+                }
             }
         }
 
@@ -125,8 +133,8 @@ public class Parser {
             this.end = end;
         }
 
-        public Token create(int lineNumber) {
-            return creator.create(matchResult, lineNumber);
+        public Token create(String source, int lineNumber) {
+            return creator.create(matchResult, source, lineNumber);
         }
 
         @Override

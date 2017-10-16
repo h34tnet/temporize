@@ -5,17 +5,14 @@
 </head>
 <body>
 {+include includes.Header as header}
-<h1>{$title}</h1>
+<h1>{$title|html}</h1>
 {if $authors}
 written by:
-<ul>
-    {for $authors}
-    {if $link}
+<ul>{for $authors}{if $link}
     <li><a href="{$link}">{$name}</a></li>
     {else}
     <li>{$name}</li>
-    {/if}
-    {/for}
+    {/if}{/for}
 </ul>
 {else}
 no authors
