@@ -16,8 +16,8 @@ source files, which can then be used from your code.
 ## Supported markup
  
 * `{$placeholder}`: creates a setter to assign a value for this placeholder
-* `{$placeholder|modifier1|modifier2}`: encodes the value with the given modifiers.
-  Modifiers are String->String functions.
+* `{$placeholder|modifier1|modifier2}`: processes the value with the given modifiers
+  Modifiers are String->String functions defined in a special class and imported statically
 * `{for block}...{/for}`: creates a subclass from the content that can be 
  assigned 0-n times 
 * `{for block:com.example.mytemplate}` or `{for block}{+import:com.example.mytemplate}{/*}`: 
@@ -35,11 +35,13 @@ Template `tpl/index/myTemplate.html`:
     </head>
     <body>
       <h1>{headline|stripnl|html}</h1>
-      {if showIntroduction}<div>{introduction|html}</div>{/if}
-      {if point} 
+      {if $showIntroduction}<div>{introduction|html}</div>{/if}
+      {if $point} 
       <ul>
-      {*point}<li><a href="/{target|urlenc}">{text|html}</a></li>{/*}
+      {for $point}<li><a href="/{target|urlenc}">{text|ellipsize80|html}</a></li>{/for}
       </ul>
+      {else}
+      <p>No points</p>
       {/if}
       {+import:assoc/footer}
     </body>
@@ -61,7 +63,8 @@ The generated code might look something like this:
         private Collection<Point> pointList;
         private templates.assoc.Footer footer; 
         
-        MyTemplate() {}
+        public MyTemplate() {}
+        public MyTemplate(String title, ...) {this.title = title; ...}
         
         public MyTemplate setTitle(String title) {...}
         ...
@@ -75,12 +78,12 @@ The generated code might look something like this:
         public String toString() {
             StringBuilder sb = new StringBuilder()
             sb.append("<html>\n    <head>\n      <title>");
-            sb.append(TemporizeFn.html(this.headline));
+            sb.append(html(ellipsize80(this.headline)));
             sb.append("</title>\n    </head>");
             ...
             if (this.showIntroduction) {
                 sb.append("<div>");
-                sb.append(TemporizeFn.html(this.introduction));
+                sb.append(html(this.introduction));
                 sb.append("</div>");
             }
             ...
@@ -88,7 +91,14 @@ The generated code might look something like this:
         }
         
         public static class Point {
+            
             public Point() {}
+            
+            public Point(String target, String text) { 
+                this.target = target;
+                this.text = text; 
+            }
+            
             public Point setTarget(String target) {...}
             ...
         }
@@ -97,9 +107,9 @@ The generated code might look something like this:
 The methods toString or write are used to execute the template and get the result. So
 in your code you could do:
 
-    List<Points> points = new ArrayList<Points>();
-    points.add(new Point().setTarget("current news").setText("news"));
-    points.add(new Point().setTarget("archives").setText("archives"));
+    List<Points> points = Arrays.asList(
+        new Point().setTarget("current news").setText("news"),
+        new Point().setTarget("archives").setText("archives"));
 
     System.out.println(new MyTemplate()
         .setTitle("hello world")
