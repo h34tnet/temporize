@@ -161,15 +161,17 @@ public abstract class ASTNode implements Iterator<ASTNode> {
     public static class Include extends ASTNode {
 
         public final String filename;
+        public final String instance;
 
-        public Include(ASTNode prev, String filename) {
+        public Include(ASTNode prev, String filename, String instance) {
             super(prev);
             this.filename = filename;
+            this.instance = instance;
         }
 
         @Override
         public String print(int identation) {
-            String output = ident(identation) + "include(" + filename + ")\n";
+            String output = ident(identation) + "include(" + filename + " as " + instance + ")\n";
 
             if (getNext() != null)
                 output += getNext().print(identation);

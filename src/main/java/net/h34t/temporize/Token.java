@@ -125,13 +125,15 @@ public abstract class Token {
 
     public static class Include extends Token {
 
-        public static final Pattern PATTERN = Pattern.compile("\\{\\+include\\s+(\\w+)}");
+        public static final Pattern PATTERN = Pattern.compile("\\{\\+include\\s+(((\\w+.)*)([A-Z]\\w+))\\s+as\\s+(\\w+)}");
 
         public final String includeName;
+        public final String instanceName;
 
-        public Include(String contents, String includeName, int line, int offs) {
+        public Include(String contents, String includeName, String instanceName, int line, int offs) {
             super(contents, line, offs);
             this.includeName = includeName;
+            this.instanceName = instanceName;
         }
 
         public static Creator getCreator() {
@@ -143,7 +145,7 @@ public abstract class Token {
 
                 @Override
                 public Token create(MatchResult matchResult, int line) {
-                    return new Include(matchResult.group(), matchResult.group(1), line, matchResult.start());
+                    return new Include(matchResult.group(), matchResult.group(1), matchResult.group(5), line, matchResult.start());
                 }
             };
         }

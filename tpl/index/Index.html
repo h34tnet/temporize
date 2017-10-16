@@ -4,7 +4,7 @@
     <title>{$title}</title>
 </head>
 <body>
-{+include:
+{+include includes.Header as header}
 <h1>{$title}</h1>
 {if $authors}
 written by:
@@ -23,6 +23,10 @@ no authors
 {if $intro}
 {$intro}
 {/if}
+
+{for $images}
+<div>{+include includes.Image as image}</div>
+{/for}
 
 </body>
 </html>

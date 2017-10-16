@@ -28,7 +28,7 @@ public class ASTBuilder {
                 previous.setNext(current);
 
             } else if (token instanceof Token.Include) {
-                current = new ASTNode.Include(previous, ((Token.Include) token).includeName);
+                current = new ASTNode.Include(previous, ((Token.Include) token).includeName, ((Token.Include) token).instanceName);
                 previous.setNext(current);
 
             } else if (token instanceof Token.Block) {

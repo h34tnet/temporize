@@ -4,9 +4,8 @@ import org.apache.commons.lang3.StringEscapeUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
-
-import static net.h34t.temporize.ASTNode.toClassName;
 
 public class Compiler {
 
@@ -65,16 +64,32 @@ public class Compiler {
         }
     }
 
-    static String createVariableSetter(String className, String name, int ident) {
-        return Ident.of(ident) + "    public " + className + " set" + toClassName(name) + "(String " + name + ") {\n" +
-                Ident.of(ident) + "        this." + name + " = " + name + ";\n" +
-                Ident.of(ident) + "        return this;\n" +
-                Ident.of(ident) + "    }";
+    static <A extends ASTNode> List<A> getNodesOf(ASTNode node, Class<A> aClass) {
+        if (node == null) {
+            return new ArrayList<>();
+        }
+
+        List<A> nodes = new ArrayList<>();
+        if (node.getClass().isAssignableFrom(aClass)) {
+            nodes.add((A) node);
+        }
+
+        if (node instanceof ASTNode.Conditional) {
+            nodes.addAll(getNodesOf(((ASTNode.Conditional) node).consequent, aClass));
+
+            if (((ASTNode.Conditional) node).alternative != null)
+                nodes.addAll(getNodesOf(((ASTNode.Conditional) node).alternative, aClass));
+        }
+
+        nodes.addAll(getNodesOf(node.next(), aClass));
+
+        return nodes;
+
     }
 
-    static String createBlockSetter(String className, ASTNode.Block block, int ident) {
-        return Ident.of(ident) + "    public " + className + " set" + block.blockClassName + "(List<" + block.blockClassName + "> " + block.blockName + ") {\n" +
-                Ident.of(ident) + "        this." + block.blockName + " = " + block.blockName + ";\n" +
+    static String createSetter(String className, String type, String instanceName, int ident) {
+        return Ident.of(ident) + "    public " + className + " set" + ASTNode.toClassName(instanceName) + "(" + type + " " + instanceName + ") {\n" +
+                Ident.of(ident) + "        this." + instanceName + " = " + instanceName + ";\n" +
                 Ident.of(ident) + "        return this;\n" +
                 Ident.of(ident) + "    }";
     }
@@ -109,9 +124,16 @@ public class Compiler {
 
         } else if (node instanceof ASTNode.Block) {
             StringBuilder sb = new StringBuilder();
-            sb.append("\n").append(Ident.of(ident) + "for (" + ((ASTNode.Block) node).blockClassName + " _block : " + ((ASTNode.Block) node).blockName + "List)\n");
+            sb.append("\n").append(Ident.of(ident) + "for (" + ((ASTNode.Block) node).blockClassName + " _block : " + ((ASTNode.Block) node).blockName + ")\n");
             sb.append(Ident.of(ident + 1) + "sb.append(_block.toString());\n");
             return sb.toString();
+
+        } else if (node instanceof ASTNode.Include) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(Ident.of(ident)).append("sb.append(").append(((ASTNode.Include) node).instance).append(".toString());\n");
+            sb.append(createOutput(node.next(), ident));
+            return sb.toString();
+
 
         } else {
             throw new RuntimeException("Undefined ASTNode " + node.getClass().getName());
@@ -119,30 +141,36 @@ public class Compiler {
         }
     }
 
-    public Template compile(String packageName, String className, ASTNode root) {
-        return compile(packageName, className, root, 0);
+    public Template compile(String packageName, String className, ASTNode root, Consumer<String> includeHandler) {
+        return compile(packageName, className, root, 0, includeHandler);
     }
 
 
-    Template compile(String packageName, String className, ASTNode root, int ident) {
-        List<ASTNode.Variable> variables = getVariables(root).stream()
-                .distinct()
-                .collect(Collectors.toList());
+    Template compile(String packageName, String className, ASTNode root, int ident, Consumer<String> includeHandler) {
+        List<ASTNode.Variable> variables = getVariables(root);
+
+        List<ASTNode.Block> blocks = getBlocks(root);
+
+        List<ASTNode.Include> includes = getNodesOf(root, ASTNode.Include.class);
+
+        for (ASTNode.Include include : includes)
+            includeHandler.accept(include.filename);
 
         List<String> variableNames = variables.stream()
                 .map(v -> v.name)
                 .distinct()
                 .collect(Collectors.toList());
 
-        List<ASTNode.Block> blocks = getBlocks(root);
-
         List<String> constructorInitializers =
                 variables.stream().map(v -> "String " + v.name)
+                        .distinct()
                         .collect(Collectors.toList());
 
         constructorInitializers.addAll(blocks.stream()
                 .map(b -> "List<" + b.blockClassName + "> " + b.blockName).collect(Collectors.toList()));
 
+        constructorInitializers.addAll(includes.stream()
+                .map(i -> i.filename + " " + i.instance).collect(Collectors.toList()));
 
         StringBuilder sb = new StringBuilder();
         if (packageName != null) {
@@ -160,6 +188,11 @@ public class Compiler {
         for (ASTNode.Block block : blocks)
             sb.append(Ident.of(ident)).append("    private List<").append(block.blockClassName).append("> ").append(block.blockName).append(";\n");
 
+        // block property definitions
+        for (ASTNode.Include inc : includes)
+            sb.append(Ident.of(ident)).append("    private ").append(inc.filename).append(" ").append(inc.instance).append(";\n");
+
+
         sb.append("\n");
 
         // empty constructor
@@ -168,21 +201,28 @@ public class Compiler {
 
 
         // full constructor
-        sb.append(Ident.of(ident)).append("    public ").append(className).append("(");
-        sb.append(constructorInitializers.stream()
-                .collect(Collectors.joining(", ")))
-                .append(") {\n");
-        variableNames.forEach(v -> sb.append(Ident.of(ident + 2)).append("this.").append(v).append(" = ").append(v).append(";\n"));
-        blocks.forEach(b -> sb.append(Ident.of(ident + 2)).append("this.").append(b.blockName).append(" = ").append(b.blockName).append(";\n"));
-        sb.append(Ident.of(ident + 1)).append("}\n\n");
+        if (constructorInitializers.size() > 0) {
+            sb.append(Ident.of(ident)).append("    public ").append(className).append("(");
+            sb.append(constructorInitializers.stream()
+                    .collect(Collectors.joining(", ")))
+                    .append(") {\n");
+            variableNames.forEach(v -> sb.append(Ident.of(ident + 2)).append("this.").append(v).append(" = ").append(v).append(";\n"));
+            blocks.forEach(b -> sb.append(Ident.of(ident + 2)).append("this.").append(b.blockName).append(" = ").append(b.blockName).append(";\n"));
+            includes.forEach(b -> sb.append(Ident.of(ident + 2)).append("this.").append(b.instance).append(" = ").append(b.instance).append(";\n"));
+            sb.append(Ident.of(ident + 1)).append("}\n\n");
+        }
 
         // variable setters
         for (String var : variableNames)
-            sb.append(createVariableSetter(className, var, ident)).append("\n\n");
+            sb.append(createSetter(className, "String", var, ident)).append("\n\n");
 
         // block setters
         for (ASTNode.Block block : blocks)
-            sb.append(Ident.of(ident)).append(createBlockSetter(className, block, ident)).append("\n\n");
+            sb.append(Ident.of(ident)).append(createSetter(className, "List<" + block.blockClassName + ">", block.blockName, ident)).append("\n\n");
+
+        // include setters
+        for (ASTNode.Include elem : includes)
+            sb.append(Ident.of(ident)).append(createSetter(className, elem.filename, elem.instance, ident)).append("\n\n");
 
         // output body
         sb.append(Ident.of(ident)).append("    @Override\n");
@@ -196,8 +236,7 @@ public class Compiler {
         sb.append(Ident.of(ident)).append("    }\n");
 
         for (ASTNode.Block block : blocks) {
-
-            sb.append("\n").append(compile(null, block.blockClassName, block.branch, ident + 1));
+            sb.append("\n").append(compile(null, block.blockClassName, block.branch, ident + 1, includeHandler));
         }
 
         sb.append(Ident.of(ident)).append("}\n");
