@@ -12,7 +12,7 @@ public class CompilerTest {
                 "{$value}\n" +
                 "</html>"));
 
-        List<ASTNode.Variable> nodes = Compiler.getVariables(root);
+        List<ASTNode.Variable> nodes = Compiler.getNodesOf(root, ASTNode.Variable.class);
 
         Assert.assertEquals(1, nodes.size());
     }
@@ -23,7 +23,7 @@ public class CompilerTest {
                 "{if $value}{$value}{else}no value, {$name}{/if}\n" +
                 "</html>"));
 
-        List<ASTNode.Variable> nodes = Compiler.getVariables(root);
+        List<ASTNode.Variable> nodes = Compiler.getNodesOf(root, ASTNode.Variable.class);
 
         Assert.assertEquals(2, nodes.size());
         Assert.assertEquals("value", nodes.get(0).name);
@@ -36,7 +36,7 @@ public class CompilerTest {
                 "{if $value}{$value}{else}no value, {for $block}{$name}{/for}{/if}\n" +
                 "</html>"));
 
-        List<ASTNode.Variable> nodes = Compiler.getVariables(root);
+        List<ASTNode.Variable> nodes = Compiler.getNodesOf(root, ASTNode.Variable.class);
 
         Assert.assertEquals(1, nodes.size());
         Assert.assertEquals("value", nodes.get(0).name);

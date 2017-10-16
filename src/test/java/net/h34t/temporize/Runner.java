@@ -13,7 +13,7 @@ public class Runner {
     public void testRunner() throws IOException {
         String mod = "mod.Modifiers";
 
-        generate(new File("tpl"), "index.Index", new File("tpl-gen"), mod + ".*");
+        generate(new File("tpl"), "index.Stocks", new File("tpl-gen"), mod + ".*");
     }
 
     public void generate(File templateBaseDirectory, String fullName, File outputDirectory, String modifiers) throws IOException {

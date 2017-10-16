@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -110,5 +111,21 @@ public class ParserTest {
         Assert.assertEquals(9, tokens.size());
 
         System.out.println(tokens.stream().map(Token::toString).collect(Collectors.joining("\n")));
+    }
+
+    @Test
+    public void testParseStocks() throws IOException {
+
+        List<Token> tokens = new Parser(TOKEN_CREATORS)
+                .parse(new File("tpl/index/Stocks.html"));
+
+        ASTNode root = new ASTBuilder().build(tokens);
+
+        // System.out.println(tokens.stream().map(Token::toString).collect(Collectors.joining("\n")));
+
+        // System.out.println(root.print(0));
+
+
+        System.out.println(new Compiler().compile("test", "test", "", root, s -> {}));
     }
 }

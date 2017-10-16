@@ -12,58 +12,6 @@ public class Compiler {
     public Compiler() {
     }
 
-    static List<ASTNode.Variable> getVariables(ASTNode node) {
-        if (node == null) {
-            return new ArrayList<>();
-
-        } else if (node instanceof ASTNode.Variable) {
-            List<ASTNode.Variable> variables = new ArrayList<>();
-            variables.add((ASTNode.Variable) node);
-            variables.addAll(getVariables(node.getNext()));
-            return variables;
-
-        } else if (node instanceof ASTNode.Conditional) {
-            List<ASTNode.Variable> variables = new ArrayList<>();
-            variables.addAll(getVariables(((ASTNode.Conditional) node).consequent));
-
-            if (((ASTNode.Conditional) node).alternative != null)
-                variables.addAll(getVariables(((ASTNode.Conditional) node).alternative));
-
-            variables.addAll(getVariables(node.next()));
-
-            return variables;
-
-        } else {
-            return getVariables(node.getNext());
-        }
-    }
-
-    static List<ASTNode.Block> getBlocks(ASTNode node) {
-        if (node == null) {
-            return new ArrayList<>();
-
-        } else if (node instanceof ASTNode.Block) {
-            List<ASTNode.Block> blocks = new ArrayList<>();
-            blocks.add((ASTNode.Block) node);
-            blocks.addAll(getBlocks(node.next()));
-            return blocks;
-
-        } else if (node instanceof ASTNode.Conditional) {
-            List<ASTNode.Block> blocks = new ArrayList<>();
-            blocks.addAll(getBlocks(((ASTNode.Conditional) node).consequent));
-
-            if (((ASTNode.Conditional) node).alternative != null)
-                blocks.addAll(getBlocks(((ASTNode.Conditional) node).alternative));
-
-            blocks.addAll(getBlocks(node.next()));
-
-            return blocks;
-
-        } else {
-            return getBlocks(node.getNext());
-        }
-    }
-
     static <A extends ASTNode> List<A> getNodesOf(ASTNode node, Class<A> aClass) {
         if (node == null) {
             return new ArrayList<>();
@@ -133,18 +81,17 @@ public class Compiler {
             }
 
             sb.append(Ident.of(indent)).append("}\n\n");
-            return sb.toString() + createOutput(node.next(), indent);
-
-        } else if (node instanceof ASTNode.Block) {
-            return "\n" + Ident.of(indent) + "for (" + ((ASTNode.Block) node).blockClassName + " _block : " + ((ASTNode.Block) node).blockName + ")\n" +
-                    Ident.of(indent + 1) + "sb.append(_block.toString());\n";
-
-        } else if (node instanceof ASTNode.Include) {
-            StringBuilder sb = new StringBuilder();
-            sb.append(Ident.of(indent)).append("sb.append(").append(((ASTNode.Include) node).instance).append(".toString());\n");
             sb.append(createOutput(node.next(), indent));
             return sb.toString();
 
+        } else if (node instanceof ASTNode.Block) {
+            return "\n" + Ident.of(indent) + "for (" + ((ASTNode.Block) node).blockClassName + " _block : " + ((ASTNode.Block) node).blockName + ")\n" +
+                    Ident.of(indent + 1) + "sb.append(_block.toString());\n"
+                    + createOutput(node.next(), indent);
+
+        } else if (node instanceof ASTNode.Include) {
+            return Ident.of(indent) + "sb.append(" + ((ASTNode.Include) node).instance + ".toString());\n" +
+                    createOutput(node.next(), indent);
 
         } else {
             throw new RuntimeException("Undefined ASTNode " + node.getClass().getName());
@@ -158,10 +105,8 @@ public class Compiler {
 
 
     Template compile(String packageName, String className, String modifier, ASTNode root, int ident, Consumer<String> includeHandler) {
-        List<ASTNode.Variable> variables = getNodesOf(root, ASTNode.Variable.class); // getVariables(root);
-
-        List<ASTNode.Block> blocks = getNodesOf(root, ASTNode.Block.class); // getBlocks(root);
-
+        List<ASTNode.Variable> variables = getNodesOf(root, ASTNode.Variable.class);
+        List<ASTNode.Block> blocks = getNodesOf(root, ASTNode.Block.class);
         List<ASTNode.Include> includes = getNodesOf(root, ASTNode.Include.class);
 
         // process compilation of includes from the outside
@@ -199,11 +144,11 @@ public class Compiler {
 
         // variable property definitions
         for (String var : variableNames)
-            sb.append(Ident.of(ident)).append("    private String ").append(var).append(";\n");
+            sb.append(Ident.of(ident)).append("    private String ").append(var).append(" = \"\";\n");
 
         // block property definitions
         for (ASTNode.Block block : blocks)
-            sb.append(Ident.of(ident)).append("    private List<").append(block.blockClassName).append("> ").append(block.blockName).append(";\n");
+            sb.append(Ident.of(ident)).append("    private List<").append(block.blockClassName).append("> ").append(block.blockName).append(" = new ArrayList<>();\n");
 
         // block property definitions
         for (ASTNode.Include inc : includes)

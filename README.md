@@ -5,10 +5,14 @@ source files, which can then be used from your code.
 
 ## Why + advantages
 
-* Speed
+* Speed - it's ~30% faster than Rocker at the https://github.com/mbosecke/template-benchmark 
+  Stock benchmark
 * No IO during runtime (i.e. no blocking, IO is done only during the compilation step)
-* IDE auto-completion support
- 
+* IDE auto-completion support for all IDEs without any extra plug-ins
+* Packaging and distributing the compiled templates is easy. There is no need to 
+  package the original template sources.
+* Bytecode obfuscators work on the templates.
+
 ## Downsides
 
 * After changing templates the project must be recompiled
@@ -16,34 +20,34 @@ source files, which can then be used from your code.
 ## Supported markup
  
 * `{$placeholder}`: creates a setter to assign a value for this placeholder
-* `{$placeholder|modifier1|modifier2}`: processes the value with the given modifiers
-  Modifiers are String->String functions defined in a special class and imported statically
+* `{$placeholder|modifier1|modifier2}`: setter that also applies the given modifiers to the value
+  Modifiers are String->String functions defined in a special class
 * `{for block}...{/for}`: creates a subclass from the content that can be 
  assigned 0-n times 
-* `{for block:com.example.mytemplate}` or `{for block}{+import:com.example.mytemplate}{/*}`: 
- imports a different template here
+* `{+import com.example.mytemplate as mytemplate}`: imports a different template here
+  note that the import gets its own top level class and can be re-used in different templates
 * `{if condition}...{/if}`: creates a conditional
-* `{if condition}...{else}...{/if}`: creates a conditional with an else block
+* `{if condition}...{else}...{/if}`: creates a conditional with an alternative
 
 ## Example
 
-Template `tpl/index/myTemplate.html`:
+Template `tpl/index/MyTemplate.html`:
 
     <html>
     <head>
-      <title>{title|html}</title>
+      <title>{$title|html}</title>
     </head>
     <body>
-      <h1>{headline|stripnl|html}</h1>
-      {if $showIntroduction}<div>{introduction|html}</div>{/if}
+      <h1>{$headline|stripnl|html}</h1>
+      {if $showIntroduction}<div>{$introduction|html}</div>{/if}
       {if $point} 
       <ul>
-      {for $point}<li><a href="/{target|urlenc}">{text|ellipsize80|html}</a></li>{/for}
+      {for $point}<li><a href="/{$target|urlenc}">{$text|ellipsize80|html}</a></li>{/for}
       </ul>
       {else}
       <p>No points</p>
       {/if}
-      {+import:assoc/footer}
+      {+import assoc/Footer}
     </body>
     </html>
     
@@ -56,17 +60,17 @@ The generated code might look something like this:
     package template.template.index; 
     
     class MyTemplate {
-        private String title;
-        private String headline;
+        private String title = "";
+        private String headline = "";
         private boolean showIntroduction;
-        private String introduction;
-        private Collection<Point> pointList;
+        private String introduction = "";
+        private List<Point> pointList = new ArrayList<>();
         private templates.assoc.Footer footer; 
         
         public MyTemplate() {}
         public MyTemplate(String title, ...) {this.title = title; ...}
         
-        public MyTemplate setTitle(String title) {...}
+        public MyTemplate setTitle(String title) {this.title = title;}
         ...
         public MyTemplate showIntroduction(boolean showIntroduction) {...}
         public MyTemplate setPointList(Collection<Point> pointList) {...}
@@ -91,6 +95,9 @@ The generated code might look something like this:
         }
         
         public static class Point {
+        
+            private String target = "";
+            private String text = "";
             
             public Point() {}
             
@@ -124,20 +131,30 @@ in your code you could do:
 * Top level templates and fully qualified includes generate top level classes,
  while blocks create inner classes.
  
-* There are some pre-defined modifiers but additional ones can be defined.
+* There are some pre-defined modifiers but additional ones can be added.
 
 * No reflection at runtime.
 
 ## Benchmark
 
-* TODO
-* It's fast.
+* It's fast. On my computer, the https://github.com/mbosecke/template-benchmark's 
+  fastest engine is Rocker, with 49.271 ops/s. Temporize gets 66.275 ops/s.  
 * Compilation may not as fast but that doesn't really matter because it happens at 
- project compile time anyway.
-* Packaging and distributing the compiled templates is easy. There is no need to 
- package the original template sources.
+  project compile time instead of runtime
+  
+  
+    Benchmark                     Mode  Cnt      Score     Error  Units
+    Freemarker.benchmark         thrpt   50  20334,079 ± 173,635  ops/s
+    Handlebars.benchmark         thrpt   50  24007,420 ± 138,765  ops/s
+    Mustache.benchmark           thrpt   50  26920,209 ± 104,248  ops/s
+    Pebble.benchmark             thrpt   50  43074,752 ± 316,106  ops/s
+    Rocker.benchmark             thrpt   50  49271,911 ± 322,755  ops/s
+    Temporize.benchmark          thrpt   50  66275,758 ± 458,256  ops/s
+    Thymeleaf.benchmark          thrpt   50   1907,132 ±  24,483  ops/s
+    Trimou.benchmark             thrpt   50  28742,674 ± 232,416  ops/s
+    Velocity.benchmark           thrpt   50  26137,320 ± 141,420  ops/s
 
 ## How to compile
 
-* Call manually: `java -jar temporize.jar tpl/ src_gen/`
-* Maven/Gradle Plugin (todo)
+* Call manually: `java -jar temporize.jar tpl/ src_gen/ /path/to/Modifiers`
+* TODO: Maven/Gradle Plugin
