@@ -121,10 +121,10 @@ public class Compiler {
         List<String> blockNames = blocks.stream().map(e -> e.blockName).collect(Collectors.toList());
         List<String> includeNames = includes.stream().map(e -> e.instance).collect(Collectors.toList());
 
-        if (Util.containsDuplicates(blockNames))
+        if (Utils.containsDuplicates(blockNames))
             throw new RuntimeException("Block variables must be unique:" + blockNames.stream().collect(Collectors.joining(", ")));
 
-        if (Util.containsDuplicates(includeNames))
+        if (Utils.containsDuplicates(includeNames))
             throw new RuntimeException("Include variables must be unique: " + includeNames.stream().collect(Collectors.joining(", ")));
 
         List<String> blockVarCollissions = blockNames.stream().filter(bn -> variableNames.contains(bn)).collect(Collectors.toList());
@@ -157,10 +157,12 @@ public class Compiler {
         StringBuilder sb = new StringBuilder();
         if (packageName != null) {
             sb.append("package ").append(packageName).append(";\n\n");
-            sb.append("import java.util.List;\n");
+            if (blocks.size() > 0) {
+                sb.append("import java.util.List;\n");
+                sb.append("import java.util.ArrayList;\n\n");
+            }
             if (modifier != null)
-                sb.append("import static ").append(modifier).append(";\n");
-            sb.append("\n");
+                sb.append("import static ").append(modifier).append(".*;\n\n");
         }
 
         sb.append(Ident.of(ident)).append("public ").append(packageName != null ? "" : "static ").append("class ").append(className).append(" {\n\n");

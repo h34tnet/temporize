@@ -2,14 +2,14 @@ package net.h34t.temporize;
 
 import java.util.List;
 
-public class Util {
+public class Utils {
 
     public static <A> boolean containsDuplicates(List<A> collection) {
-        if (collection == null || collection.isEmpty())
+        if (collection == null || collection.size() < 2)
             return false;
 
         for (int i = 0; i < collection.size() - 1; i++) {
-            for (int j = i + 1; i < collection.size(); j++) {
+            for (int j = i + 1; j < collection.size(); j++) {
                 if (collection.get(i).equals(collection.get(j)))
                     return true;
             }
@@ -17,5 +17,9 @@ public class Util {
         }
 
         return false;
+    }
+
+    public static String ucFirst(String input) {
+        return input.substring(0, 1).toUpperCase() + input.substring(1);
     }
 }
