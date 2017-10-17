@@ -3,7 +3,7 @@ package net.h34t.temporize;
 import org.junit.Test;
 
 /**
- * TODO add documentation
+ *
  */
 public class TokenTest {
     @Test

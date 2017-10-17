@@ -1,11 +1,15 @@
 package net.h34t.temporize;
 
 import java.io.File;
+import java.util.regex.Pattern;
 
 /**
  * File that represents an un-compiled source template.
  */
 public class TemplateFile {
+
+    private static final String PATH_SEPARATOR_REGEXP = Pattern.quote(File.separator);
+    private static final String PATH_SEPARATOR = File.separator;
 
     private File templateDirectory;
     private File templateFile;
@@ -22,7 +26,7 @@ public class TemplateFile {
     public String getPackageName() {
         return templateFile.getParentFile().getPath()
                 .substring(templateDirectory.getPath().length() + 1)
-                .replaceAll("/", ".");
+                .replaceAll(PATH_SEPARATOR_REGEXP, ".");
 
     }
 

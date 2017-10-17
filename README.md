@@ -155,7 +155,25 @@ in your code you could do:
     Trimou.benchmark             thrpt   50  28742,674 ± 232,416  ops/s
     Velocity.benchmark           thrpt   50  26137,320 ± 141,420  ops/s
 
-## How to compile
+## How to use
 
-* Call manually: `java -jar temporize.jar tpl/ src_gen/ /path/to/Modifiers`
-* TODO: Maven/Gradle Plugin
+### Call manually
+
+ `java -jar temporize.jar tpl/ src_gen/ package.name.of.Modifiers`
+
+### gradle pre-build
+
+    task temporize() << {
+        javaexec {
+            main = "-jar"
+            args = [
+                    "temporize.jar",
+                    "tpl",
+                    "src/main/tpl",
+                    "package.name.of.Modifiers"
+            ]
+        }
+    }
+     
+    build.dependsOn temporize
+
