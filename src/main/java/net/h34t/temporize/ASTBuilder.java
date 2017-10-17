@@ -71,7 +71,7 @@ public class ASTBuilder {
                 }
 
                 ASTNode.NoOp elseNode = new ASTNode.NoOp(current);
-                ((ASTNode.Conditional) current).setAlternative(elseNode);
+                ((ASTNode.Conditional) current).alternative = elseNode;
                 current = elseNode;
 
             } else if (token instanceof Token.ConditionalEnd) {

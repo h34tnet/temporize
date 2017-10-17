@@ -37,7 +37,7 @@ public class Compiler {
     }
 
     static String createSetter(String className, String type, String instanceName, int ident) {
-        return Ident.of(ident) + "    public " + className + " set" + ASTNode.toClassName(instanceName) + "(" + type + " " + instanceName + ") {\n" +
+        return Ident.of(ident) + "    public " + className + " set" + Utils.toClassName(instanceName) + "(" + type + " " + instanceName + ") {\n" +
                 Ident.of(ident) + "        this." + instanceName + " = " + instanceName + ";\n" +
                 Ident.of(ident) + "        return this;\n" +
                 Ident.of(ident) + "    }";
@@ -52,16 +52,16 @@ public class Compiler {
      * @param indent level of indentation
      * @return the toString() body as a string of java code
      */
-    static String createOutput(ASTNode node, int indent) {
+    static String createStringOutput(ASTNode node, int indent) {
         if (node == null) {
             return "";
 
         } else if (node instanceof ASTNode.NoOp) {
-            return createOutput(node.next(), indent);
+            return createStringOutput(node.next(), indent);
         }
         if (node instanceof ASTNode.ConstantValue) {
             return Ident.of(indent) + "sb.append(\"" + StringEscapeUtils.escapeJava(((ASTNode.ConstantValue) node).value) + "\");\n"
-                    + createOutput(node.next(), indent);
+                    + createStringOutput(node.next(), indent);
 
         } else if (node instanceof ASTNode.Variable) {
             StringBuilder variable = new StringBuilder("this." + ((ASTNode.Variable) node).name);
@@ -69,30 +69,30 @@ public class Compiler {
                 variable = new StringBuilder(modifier + "(" + variable + ")");
 
             return Ident.of(indent) + "sb.append(" + variable.toString() + ");\n"
-                    + createOutput(node.next(), indent);
+                    + createStringOutput(node.next(), indent);
 
         } else if (node instanceof ASTNode.Conditional) {
             StringBuilder sb = new StringBuilder();
             sb.append("\n").append(Ident.of(indent)).append("if (this.").append(((ASTNode.Conditional) node).name).append(" != null && !").append(((ASTNode.Conditional) node).name).append(".isEmpty()) {\n");
-            sb.append(createOutput(((ASTNode.Conditional) node).consequent, indent + 1));
+            sb.append(createStringOutput(((ASTNode.Conditional) node).consequent, indent + 1));
 
             if (((ASTNode.Conditional) node).alternative != null) {
                 sb.append("\n").append(Ident.of(indent)).append("} else {\n");
-                sb.append(createOutput(((ASTNode.Conditional) node).alternative, indent + 1));
+                sb.append(createStringOutput(((ASTNode.Conditional) node).alternative, indent + 1));
             }
 
             sb.append(Ident.of(indent)).append("}\n\n");
-            sb.append(createOutput(node.next(), indent));
+            sb.append(createStringOutput(node.next(), indent));
             return sb.toString();
 
         } else if (node instanceof ASTNode.Block) {
             return "\n" + Ident.of(indent) + "for (" + ((ASTNode.Block) node).blockClassName + " _block : " + ((ASTNode.Block) node).blockName + ")\n" +
                     Ident.of(indent + 1) + "sb.append(_block.toString());\n"
-                    + createOutput(node.next(), indent);
+                    + createStringOutput(node.next(), indent);
 
         } else if (node instanceof ASTNode.Include) {
             return Ident.of(indent) + "sb.append(" + ((ASTNode.Include) node).instance + ".toString());\n" +
-                    createOutput(node.next(), indent);
+                    createStringOutput(node.next(), indent);
 
         } else {
             throw new RuntimeException("Undefined ASTNode " + node.getClass().getName());
@@ -114,7 +114,7 @@ public class Compiler {
         // process compilation of includes from the outside
         // note: this may generate infinite loops
         for (ASTNode.Include include : includes)
-            includeHandler.accept(include.filename);
+            includeHandler.accept(include.classname);
 
         // extract the variable names
         Set<String> variableNames = variables.stream().map(e -> e.name).distinct().collect(Collectors.toSet());
@@ -127,18 +127,17 @@ public class Compiler {
         if (Utils.containsDuplicates(includeNames))
             throw new RuntimeException("Include variables must be unique: " + includeNames.stream().collect(Collectors.joining(", ")));
 
-        List<String> blockVarCollissions = blockNames.stream().filter(bn -> variableNames.contains(bn)).collect(Collectors.toList());
+        List<String> blockVarCollissions = blockNames.stream().filter(variableNames::contains).collect(Collectors.toList());
         if (blockVarCollissions.size() > 0)
             throw new RuntimeException("Blocks " + blockVarCollissions.stream().collect(Collectors.joining(", ")) + " are already defined as variables.");
 
-        List<String> includeVarCollissions = includeNames.stream().filter(bn -> variableNames.contains(bn)).collect(Collectors.toList());
+        List<String> includeVarCollissions = includeNames.stream().filter(variableNames::contains).collect(Collectors.toList());
         if (includeVarCollissions.size() > 0)
             throw new RuntimeException("Includes " + includeVarCollissions.stream().collect(Collectors.joining(", ")) + " are already defined as variables.");
 
-        List<String> blockIncludeCollisions = includeNames.stream().filter(bn -> blockNames.contains(bn)).collect(Collectors.toList());
+        List<String> blockIncludeCollisions = includeNames.stream().filter(blockNames::contains).collect(Collectors.toList());
         if (blockIncludeCollisions.size() > 0)
-            throw new RuntimeException("Includes " + blockIncludeCollisions.stream().collect(Collectors.joining(", ")) + " are already defined as block.");
-
+            throw new RuntimeException("Includes " + blockIncludeCollisions.stream().collect(Collectors.joining(", ")) + " are already defined as blocks.");
 
         // constructor parameters for variables
         List<String> constructorInitializers =
@@ -152,7 +151,7 @@ public class Compiler {
 
         // constructor parameters for includes
         constructorInitializers.addAll(includes.stream()
-                .map(i -> i.filename + " " + i.instance).collect(Collectors.toList()));
+                .map(i -> i.classname + " " + i.instance).collect(Collectors.toList()));
 
         StringBuilder sb = new StringBuilder();
         if (packageName != null) {
@@ -177,7 +176,7 @@ public class Compiler {
 
         // block property definitions
         for (ASTNode.Include inc : includes)
-            sb.append(Ident.of(ident)).append("    private ").append(inc.filename).append(" ").append(inc.instance).append(";\n");
+            sb.append(Ident.of(ident)).append("    private ").append(inc.classname).append(" ").append(inc.instance).append(";\n");
 
 
         sb.append("\n");
@@ -209,14 +208,14 @@ public class Compiler {
 
         // include setters
         for (ASTNode.Include elem : includes)
-            sb.append(Ident.of(ident)).append(createSetter(className, elem.filename, elem.instance, ident)).append("\n\n");
+            sb.append(Ident.of(ident)).append(createSetter(className, elem.classname, elem.instance, ident)).append("\n\n");
 
         // output body
         sb.append(Ident.of(ident)).append("    @Override\n");
         sb.append(Ident.of(ident)).append("    public String toString() {\n");
         sb.append(Ident.of(ident)).append("        StringBuilder sb = new StringBuilder();\n");
 
-        sb.append(createOutput(root, ident + 2));
+        sb.append(createStringOutput(root, ident + 2));
 
         sb.append(Ident.of(ident)).append("\n");
         sb.append(Ident.of(ident)).append("        return sb.toString();\n");

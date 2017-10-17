@@ -8,6 +8,15 @@ import java.util.List;
 
 public class CompilerTest {
     @Test
+    public void createSetter() throws Exception {
+        String setter = Compiler.createSetter("Temporize", "String", "foo", 0);
+        Assert.assertEquals("    public Temporize setFoo(String foo) {\n" +
+                "        this.foo = foo;\n" +
+                "        return this;\n" +
+                "    }", setter);
+    }
+
+    @Test
     public void getVariables0() throws Exception {
         ASTNode root = new ASTBuilder().build(Parser.FULL.parse("<html>\n" +
                 "{$value}\n" +

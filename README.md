@@ -157,7 +157,19 @@ in your code you could do:
 
 ## How to use
 
+
+
 ### Call manually
+
+Converts the raw templates into classes on execution. Per default only 
+files with a `.temporize.` in the name are processed.  
+
+1. parameter: input directory where the raw templates are stored
+2. parameter: the output directory where to store the classes
+3. parameter: the fully qualified name of the class containing static modifier methods.  
+   The `Modifiers` doesn't reference a real file, only an `import static to add to the files.`    
+
+E.g.
 
  `java -jar temporize.jar tpl/ src_gen/ package.name.of.Modifiers`
 
@@ -177,3 +189,7 @@ in your code you could do:
      
     build.dependsOn temporize
 
+## TODOs
+
+* add boolean parameters if they only appear in conditionals
+* sanity checks to possible variable and method names defined in templates  

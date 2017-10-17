@@ -13,13 +13,18 @@ public class Utils {
                 if (collection.get(i).equals(collection.get(j)))
                     return true;
             }
-
         }
 
         return false;
     }
 
     public static String ucFirst(String input) {
-        return input.substring(0, 1).toUpperCase() + input.substring(1);
+        return input == null || input.length() == 0
+                ? ""
+                : input.substring(0, 1).toUpperCase() + input.substring(1);
+    }
+
+    public static String toClassName(String name) {
+        return ucFirst(name);
     }
 }

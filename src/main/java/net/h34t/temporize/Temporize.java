@@ -15,7 +15,7 @@ public class Temporize {
         try {
             if (args.length < 3) {
                 System.out.println("Usage: java -jar temporize.jar tpl/ output/ path/to/Modifiers.java");
-                System.out.println("       Compiles all templates with filename according to the pattern");
+                System.out.println("       Compiles all templates with classname according to the pattern");
                 System.out.println("       [name].temporize.[ending] into precompiled templates and saves");
                 System.out.println("       the java source files to output.");
 

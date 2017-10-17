@@ -21,10 +21,6 @@ public abstract class ASTNode {
         return sb.toString();
     }
 
-    public static String toClassName(String name) {
-        return name.substring(0, 1).toUpperCase() + name.substring(1);
-    }
-
     public ASTNode getNext() {
         return next;
     }
@@ -48,7 +44,7 @@ public abstract class ASTNode {
     }
 
     public static class NoOp extends ASTNode {
-        public NoOp(ASTNode prev) {
+        NoOp(ASTNode prev) {
             super(prev);
         }
 
@@ -60,31 +56,23 @@ public abstract class ASTNode {
 
     public static class Conditional extends ASTNode {
 
-        public final String name;
-        public ASTNode consequent;
-        public ASTNode alternative;
+        final String name;
+        ASTNode consequent;
+        ASTNode alternative;
 
-        public Conditional(ASTNode prev, String name) {
+        Conditional(ASTNode prev, String name) {
             super(prev);
             this.name = name;
-        }
-
-        public void setConsequent(ASTNode consequent) {
-            this.consequent = consequent;
-        }
-
-        public void setAlternative(ASTNode alternative) {
-            this.alternative = alternative;
         }
 
         @Override
         public String print(int indentation) {
             StringBuilder output = new StringBuilder();
-            output.append(ident(indentation) + "if " + name + "\n");
+            output.append(ident(indentation)).append("if ").append(name).append("\n");
             output.append(consequent.print(indentation + 1));
 
             if (alternative != null) {
-                output.append(ident(indentation) + "else\n");
+                output.append(ident(indentation)).append("else\n");
                 output.append(alternative.print(indentation + 1));
             }
 
@@ -97,10 +85,10 @@ public abstract class ASTNode {
 
     public static class Variable extends ASTNode {
 
-        public final String name;
-        public final List<String> modifiers;
+        final String name;
+        final List<String> modifiers;
 
-        public Variable(ASTNode prev, String name, List<String> modifiers) {
+        Variable(ASTNode prev, String name, List<String> modifiers) {
             super(prev);
             this.name = name;
             this.modifiers = new ArrayList<>(modifiers);
@@ -119,25 +107,25 @@ public abstract class ASTNode {
 
     public static class Block extends ASTNode {
 
-        public final String blockName;
-        public final String blockClassName;
+        final String blockName;
+        final String blockClassName;
 
-        public ASTNode branch;
+        ASTNode branch;
 
-        public Block(ASTNode prev, String blockName) {
+        Block(ASTNode prev, String blockName) {
             super(prev);
             this.blockName = blockName;
-            this.blockClassName = ASTNode.toClassName(blockName);
+            this.blockClassName = Utils.toClassName(blockName);
         }
 
-        public void setBranch(ASTNode branch) {
+        void setBranch(ASTNode branch) {
             this.branch = branch;
         }
 
         @Override
         public String print(int indentation) {
             StringBuilder output = new StringBuilder();
-            output.append(ident(indentation) + "for " + blockName + ":\n");
+            output.append(ident(indentation)).append("for ").append(blockName).append(":\n");
             output.append(branch.print(indentation + 1));
             if (getNext() != null)
                 output.append(getNext().print(indentation));
@@ -148,18 +136,18 @@ public abstract class ASTNode {
 
     public static class Include extends ASTNode {
 
-        public final String filename;
-        public final String instance;
+        final String classname;
+        final String instance;
 
-        public Include(ASTNode prev, String filename, String instance) {
+        Include(ASTNode prev, String classname, String instance) {
             super(prev);
-            this.filename = filename;
+            this.classname = classname;
             this.instance = instance;
         }
 
         @Override
         public String print(int indentation) {
-            String output = ident(indentation) + "include(" + filename + " as " + instance + ")\n";
+            String output = ident(indentation) + "include(" + classname + " as " + instance + ")\n";
 
             if (getNext() != null)
                 output += getNext().print(indentation);
@@ -170,9 +158,9 @@ public abstract class ASTNode {
 
     public static class ConstantValue extends ASTNode {
 
-        public final String value;
+        final String value;
 
-        public ConstantValue(ASTNode prev, String value) {
+        ConstantValue(ASTNode prev, String value) {
             super(prev);
             this.value = value;
         }

@@ -58,9 +58,16 @@ public abstract class Token {
                 contents.replace("\n", "\\n"));
     }
 
+    /**
+     * Variable tokens look {$name|modifier1|modifier1|...}
+     * <p>
+     * E.g. {$foo} or {$foo|modifier1|modifier2}
+     * <p>
+     * They must start with a letter and can contain letters and numbers
+     */
     public static class Variable extends Token {
 
-        public static Pattern EXP = Pattern.compile("\\{\\$([\\w|]+)}");
+        public static Pattern EXP = Pattern.compile("\\{\\$([a-z][\\w]*(|[\\w]))*}");
 
         public final String variableName;
         public final String[] modifiers;

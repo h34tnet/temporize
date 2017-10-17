@@ -1,6 +1,5 @@
 package net.h34t.temporize;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -10,20 +9,20 @@ import java.util.List;
 
 public class Runner {
 
-    @Ignore
-    @Test
+
+    @Test(expected = RuntimeException.class)
     public void testRunner() throws IOException {
         String mod = "mod.Modifiers";
 
-        generate(new File("tpl"), "index.Stocks", new File("tpl-gen"), mod + ".*");
+        generate(new File("tpl"), "includes/login/Error", new File("tpl-gen"), mod + ".*");
     }
 
     public void generate(File templateBaseDirectory, String fullName, File outputDirectory, String modifiers) throws IOException {
-        File filePath = new File(fullName.replaceAll("\\.", "/"));
+        File filePath = new File(fullName);
         String packageName = filePath.getParent();
         String fileName = filePath.getName();
 
-        File file = new File(new File(templateBaseDirectory, packageName), fileName + ".html");
+        File file = new File(new File(templateBaseDirectory, packageName), fileName + ".temporize.html");
 
         List<Token> tokens = Parser.FULL.parse(file);
         ASTNode root = new ASTBuilder().build(tokens);
