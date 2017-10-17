@@ -193,3 +193,4 @@ E.g.
 
 * add boolean parameters if they only appear in conditionals
 * sanity checks to possible variable and method names defined in templates  
+* have a go at continuous template builds via gradle: https://docs.gradle.org/current/userguide/continuous_build.html

@@ -17,7 +17,7 @@ public class Runner {
         generate(new File("tpl"), "includes/login/Error", new File("tpl-gen"), mod + ".*");
     }
 
-    public void generate(File templateBaseDirectory, String fullName, File outputDirectory, String modifiers) throws IOException {
+    private void generate(File templateBaseDirectory, String fullName, File outputDirectory, String modifiers) throws IOException {
         File filePath = new File(fullName);
         String packageName = filePath.getParent();
         String fileName = filePath.getName();
