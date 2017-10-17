@@ -4,26 +4,35 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Temporize {
 
     public static void main(String... args) {
-        if (args.length != 3) {
-            System.out.println("Usage: java -jar temporize.jar tpl/ output/ path/to/Modifiers.java");
-            System.out.println("       Compiles all templates with filename according to the pattern");
-            System.out.println("       [name].temporize.[ending] into precompiled templates and saves");
-            System.out.println("       the java source files to output.");
+        boolean verbose = false;
 
-        } else {
-            File inDirectory = new File(args[0]);
-            File outDirectory = new File(args[1]);
-            String modifier = args[2];
+        try {
+            if (args.length < 3) {
+                System.out.println("Usage: java -jar temporize.jar tpl/ output/ path/to/Modifiers.java");
+                System.out.println("       Compiles all templates with filename according to the pattern");
+                System.out.println("       [name].temporize.[ending] into precompiled templates and saves");
+                System.out.println("       the java source files to output.");
 
-            if (!inDirectory.exists()) {
-                System.err.println("Couldn't find input directory " + inDirectory.getName());
-                System.exit(1);
-            }
+            } else {
+                long st = System.nanoTime();
+
+                File inDirectory = new File(args[0]);
+                File outDirectory = new File(args[1]);
+                String modifier = args[2];
+
+                verbose = Arrays.stream(args).anyMatch(a -> a.equals("--verbose"));
+
+
+                if (!inDirectory.exists()) {
+                    System.err.println("Couldn't find input directory " + inDirectory.getName());
+                    System.exit(1);
+                }
 
 
 //            if (!modifierPath.exists() || !modifierPath.isFile()) {
@@ -31,44 +40,57 @@ public class Temporize {
 //                System.exit(1);
 //            }
 
-            if ((!outDirectory.exists() && !outDirectory.mkdirs()) || !outDirectory.isDirectory()) {
-                System.err.println("Couldn't create output directory " + outDirectory.getName());
-                System.exit(1);
+                if ((!outDirectory.exists() && !outDirectory.mkdirs()) || !outDirectory.isDirectory()) {
+                    System.err.println("Couldn't create output directory " + outDirectory.getName());
+                    System.exit(1);
+                }
+
+                List<File> templates = findFilesRecursively(inDirectory);
+
+                templates
+                        .forEach(t -> {
+                            TemplateFile tf = new TemplateFile(inDirectory, t);
+
+                            System.out.println("processing " + tf.getFile().getPath());
+
+                            try {
+
+                                String packageName = tf.getPackageName();
+                                String className = tf.getClassName();
+
+                                List<Token> tokens = Parser.FULL.parse(t);
+                                ASTNode root = new ASTBuilder().build(tokens);
+                                Template tpl = new Compiler().compile(packageName, className, modifier, root, inc -> {
+                                    System.out.println("Include " + inc);
+                                });
+
+                                File packageOutDirectory = tf.getOutputDirectory(outDirectory);
+                                if (!packageOutDirectory.exists() && !packageOutDirectory.mkdirs()) {
+                                    throw new IOException("Failed creating package directory " + packageOutDirectory.getPath());
+                                }
+
+                                try (FileWriter fw = new FileWriter(tf.getOutputFile(outDirectory))) {
+                                    fw.write(tpl.code);
+                                }
+
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+
+                        });
+
+                long et = System.nanoTime();
+
+                System.out.println("Done. Took " + (et - st) / 1000000 + "ms");
+
             }
 
-            List<File> templates = findFilesRecursively(inDirectory);
 
-            templates
-                    .forEach(t -> {
-                        TemplateFile tf = new TemplateFile(inDirectory, t);
+        } catch (Exception e) {
+            System.err.println("An error occurred: " + e.getMessage());
 
-                        System.out.println("processing " + tf.getFile().getPath());
-
-                        try {
-
-                            String packageName = tf.getPackageName();
-                            String className = tf.getClassName();
-
-                            List<Token> tokens = Parser.FULL.parse(t);
-                            ASTNode root = new ASTBuilder().build(tokens);
-                            Template tpl = new Compiler().compile(packageName, className, modifier, root, inc -> {
-                                System.out.println("Include " + inc);
-                            });
-
-                            File packageOutDirectory = tf.getOutputDirectory(outDirectory);
-                            if (!packageOutDirectory.exists() && !packageOutDirectory.mkdirs()) {
-                                throw new IOException("Failed creating package directory " + packageOutDirectory.getPath());
-                            }
-
-                            try (FileWriter fw = new FileWriter(tf.getOutputFile(outDirectory))) {
-                                fw.write(tpl.code);
-                            }
-
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-
-                    });
+            if (verbose)
+                e.printStackTrace();
         }
     }
 
@@ -79,7 +101,7 @@ public class Temporize {
 
         if (files != null) {
             for (File file : files) {
-                if (file.isFile() && file.getName().matches("^.*temporize.*$")) {
+                if (file.isFile() && file.getName().matches("^.+\\.temporize\\..*$")) {
                     templates.add(file);
 
                 } else if (file.isDirectory()) {

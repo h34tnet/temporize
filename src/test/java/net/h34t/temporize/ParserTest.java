@@ -117,7 +117,7 @@ public class ParserTest {
     public void testParseStocks() throws IOException {
 
         List<Token> tokens = new Parser(TOKEN_CREATORS)
-                .parse(new File("tpl/index/Stocks.html"));
+                .parse(new File("tpl/index/Stocks.temporize.html"));
 
         ASTNode root = new ASTBuilder().build(tokens);
 
@@ -125,7 +125,13 @@ public class ParserTest {
 
         // System.out.println(root.print(0));
 
+        Template t = new Compiler().compile("test", "test", "", root, s -> {
+        });
 
-        System.out.println(new Compiler().compile("test", "test", "", root, s -> {}));
+
+        Assert.assertEquals("test", t.className);
+        Assert.assertEquals("test", t.packageName);
+        Assert.assertNotNull(t.code);
+        Assert.assertFalse(t.code.trim().isEmpty());
     }
 }

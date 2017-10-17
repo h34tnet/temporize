@@ -1,5 +1,6 @@
 package net.h34t.temporize;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -9,6 +10,7 @@ import java.util.List;
 
 public class Runner {
 
+    @Ignore
     @Test
     public void testRunner() throws IOException {
         String mod = "mod.Modifiers";
