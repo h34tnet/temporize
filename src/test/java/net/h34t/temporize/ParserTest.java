@@ -94,7 +94,7 @@ public class ParserTest {
         Assert.assertEquals(2, v.modifiers.length);
     }
 
-    public void testTokens(List<Token> tokens) {
+    private void testTokens(List<Token> tokens) {
         Assert.assertEquals(3, tokens.size());
         Assert.assertTrue(tokens.get(0) instanceof Token.Literal);
         Assert.assertTrue(tokens.get(1) instanceof Token.Variable);

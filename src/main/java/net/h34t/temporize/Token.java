@@ -163,7 +163,7 @@ public abstract class Token {
 
     public static class Include extends Token {
 
-        public static final Pattern PATTERN = Pattern.compile("\\{\\+include\\s+(((\\w+.)*)([A-Z]\\w+))\\s+as\\s+(\\w+)}");
+        public static final Pattern PATTERN = Pattern.compile("\\{include\\s+(((\\w+.)*)([A-Z]\\w*))\\s+as\\s+\\$(\\w+)}");
 
         public final String includeName;
         public final String instanceName;
@@ -272,7 +272,7 @@ public abstract class Token {
     }
 
     /**
-     * Literals aren't found by regExps, they're the fillers before, between and after matches.
+     * Literals aren't found by RegExps, they're the fillers before, between and after matches.
      */
     public static class Literal extends Token {
 

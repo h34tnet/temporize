@@ -7,7 +7,8 @@ source files, which can then be used from your code.
 
 * Speed - it's ~30% faster than Rocker at the https://github.com/mbosecke/template-benchmark 
   Stock benchmark
-* No IO during runtime (i.e. no blocking, IO is done only during the compilation step)
+* No file IO during runtime (i.e. no blocking, IO is done only during the compilation step)
+  (except for the JVMs startup itself)
 * IDE auto-completion support for all IDEs without any extra plug-ins
 * Packaging and distributing the compiled templates is easy. There is no need to 
   package the original template sources.
@@ -22,12 +23,12 @@ source files, which can then be used from your code.
 * `{$placeholder}`: creates a setter to assign a value for this placeholder
 * `{$placeholder|modifier1|modifier2}`: setter that also applies the given modifiers to the value
   Modifiers are String->String functions defined in a special class
-* `{for block}...{/for}`: creates a subclass from the content that can be 
+* `{for $block}...{/for}`: creates a subclass from the content that can be
  assigned 0-n times 
-* `{+import com.example.mytemplate as mytemplate}`: imports a different template here
+* `{include com.example.mytemplate as $mytemplate}`: imports a different template here
   note that the import gets its own top level class and can be re-used in different templates
-* `{if condition}...{/if}`: creates a conditional
-* `{if condition}...{else}...{/if}`: creates a conditional with an alternative
+* `{if $condition}...{/if}`: creates a conditional
+* `{if $condition}...{else}...{/if}`: creates a conditional with an alternative
 
 ## Example
 
@@ -47,7 +48,7 @@ Template `tpl/index/MyTemplate.html`:
       {else}
       <p>No points</p>
       {/if}
-      {+import assoc/Footer}
+      {import assoc/Footer as $footer}
     </body>
     </html>
     

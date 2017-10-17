@@ -1,12 +1,10 @@
 package net.h34t.temporize;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public abstract class ASTNode implements Iterator<ASTNode> {
+public abstract class ASTNode {
 
     private final ASTNode prev;
     private ASTNode next;
@@ -39,24 +37,14 @@ public abstract class ASTNode implements Iterator<ASTNode> {
         return prev;
     }
 
-    public abstract String print(int identation);
+    public abstract String print(int indentation);
 
-    @Override
     public boolean hasNext() {
         return this.next != null;
     }
 
-    @Override
     public ASTNode next() {
         return this.next;
-    }
-
-    @Override
-    public void forEachRemaining(Consumer<? super ASTNode> action) {
-        action.accept(this);
-
-        if (this.next != null)
-            next.forEachRemaining(action);
     }
 
     public static class NoOp extends ASTNode {
@@ -65,8 +53,8 @@ public abstract class ASTNode implements Iterator<ASTNode> {
         }
 
         @Override
-        public String print(int identation) {
-            return (getNext() != null) ? getNext().print(identation) : "";
+        public String print(int indentation) {
+            return (getNext() != null) ? getNext().print(indentation) : "";
         }
     }
 
@@ -90,18 +78,18 @@ public abstract class ASTNode implements Iterator<ASTNode> {
         }
 
         @Override
-        public String print(int identation) {
+        public String print(int indentation) {
             StringBuilder output = new StringBuilder();
-            output.append(ident(identation) + "if " + name + "\n");
-            output.append(consequent.print(identation + 1));
+            output.append(ident(indentation) + "if " + name + "\n");
+            output.append(consequent.print(indentation + 1));
 
             if (alternative != null) {
-                output.append(ident(identation) + "else\n");
-                output.append(alternative.print(identation + 1));
+                output.append(ident(indentation) + "else\n");
+                output.append(alternative.print(indentation + 1));
             }
 
             if (getNext() != null)
-                output.append(getNext().print(identation));
+                output.append(getNext().print(indentation));
 
             return output.toString();
         }
@@ -119,11 +107,11 @@ public abstract class ASTNode implements Iterator<ASTNode> {
         }
 
         @Override
-        public String print(int identation) {
-            String output = ident(identation) + "$" + name + ":" + modifiers.stream().collect(Collectors.joining("|")) + "\n";
+        public String print(int indentation) {
+            String output = ident(indentation) + "$" + name + ":" + modifiers.stream().collect(Collectors.joining("|")) + "\n";
 
             if (getNext() != null)
-                output += getNext().print(identation);
+                output += getNext().print(indentation);
 
             return output;
         }
@@ -147,12 +135,12 @@ public abstract class ASTNode implements Iterator<ASTNode> {
         }
 
         @Override
-        public String print(int identation) {
+        public String print(int indentation) {
             StringBuilder output = new StringBuilder();
-            output.append(ident(identation) + "for " + blockName + ":\n");
-            output.append(branch.print(identation + 1));
+            output.append(ident(indentation) + "for " + blockName + ":\n");
+            output.append(branch.print(indentation + 1));
             if (getNext() != null)
-                output.append(getNext().print(identation));
+                output.append(getNext().print(indentation));
 
             return output.toString();
         }
@@ -170,11 +158,11 @@ public abstract class ASTNode implements Iterator<ASTNode> {
         }
 
         @Override
-        public String print(int identation) {
-            String output = ident(identation) + "include(" + filename + " as " + instance + ")\n";
+        public String print(int indentation) {
+            String output = ident(indentation) + "include(" + filename + " as " + instance + ")\n";
 
             if (getNext() != null)
-                output += getNext().print(identation);
+                output += getNext().print(indentation);
 
             return output;
         }
@@ -190,11 +178,11 @@ public abstract class ASTNode implements Iterator<ASTNode> {
         }
 
         @Override
-        public String print(int identation) {
-            String output = ident(identation) + "\"" + value + "\"\n";
+        public String print(int indentation) {
+            String output = ident(indentation) + "\"" + value + "\"\n";
 
             if (getNext() != null)
-                output += getNext().print(identation);
+                output += getNext().print(indentation);
 
             return output;
         }

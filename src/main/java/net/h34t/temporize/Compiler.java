@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringEscapeUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -105,6 +106,7 @@ public class Compiler {
 
 
     Template compile(String packageName, String className, String modifier, ASTNode root, int ident, Consumer<String> includeHandler) {
+        // variables, blocks and includes are all defining values
         List<ASTNode.Variable> variables = getNodesOf(root, ASTNode.Variable.class);
         List<ASTNode.Block> blocks = getNodesOf(root, ASTNode.Block.class);
         List<ASTNode.Include> includes = getNodesOf(root, ASTNode.Include.class);
@@ -115,19 +117,40 @@ public class Compiler {
             includeHandler.accept(include.filename);
 
         // extract the variable names
-        List<String> variableNames = variables.stream()
-                .map(v -> v.name)
-                .distinct()
-                .collect(Collectors.toList());
+        Set<String> variableNames = variables.stream().map(e -> e.name).distinct().collect(Collectors.toSet());
+        List<String> blockNames = blocks.stream().map(e -> e.blockName).collect(Collectors.toList());
+        List<String> includeNames = includes.stream().map(e -> e.instance).collect(Collectors.toList());
 
+        if (Util.containsDuplicates(blockNames))
+            throw new RuntimeException("Block variables must be unique:" + blockNames.stream().collect(Collectors.joining(", ")));
+
+        if (Util.containsDuplicates(includeNames))
+            throw new RuntimeException("Include variables must be unique: " + includeNames.stream().collect(Collectors.joining(", ")));
+
+        List<String> blockVarCollissions = blockNames.stream().filter(bn -> variableNames.contains(bn)).collect(Collectors.toList());
+        if (blockVarCollissions.size() > 0)
+            throw new RuntimeException("Blocks " + blockVarCollissions.stream().collect(Collectors.joining(", ")) + " are already defined as variables.");
+
+        List<String> includeVarCollissions = includeNames.stream().filter(bn -> variableNames.contains(bn)).collect(Collectors.toList());
+        if (includeVarCollissions.size() > 0)
+            throw new RuntimeException("Includes " + includeVarCollissions.stream().collect(Collectors.joining(", ")) + " are already defined as variables.");
+
+        List<String> blockIncludeCollisions = includeNames.stream().filter(bn -> blockNames.contains(bn)).collect(Collectors.toList());
+        if (blockIncludeCollisions.size() > 0)
+            throw new RuntimeException("Includes " + blockIncludeCollisions.stream().collect(Collectors.joining(", ")) + " are already defined as block.");
+
+
+        // constructor parameters for variables
         List<String> constructorInitializers =
                 variables.stream().map(v -> "String " + v.name)
                         .distinct()
                         .collect(Collectors.toList());
 
+        // constructor parameters for blocks
         constructorInitializers.addAll(blocks.stream()
                 .map(b -> "List<" + b.blockClassName + "> " + b.blockName).collect(Collectors.toList()));
 
+        // constructor parameters for includes
         constructorInitializers.addAll(includes.stream()
                 .map(i -> i.filename + " " + i.instance).collect(Collectors.toList()));
 

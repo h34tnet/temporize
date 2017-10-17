@@ -1,6 +1,12 @@
 package net.h34t.temporize;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.LineNumberReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
@@ -58,7 +64,7 @@ public class Parser {
      * @return a list of tokens
      */
     protected List<Token> parseLine(String line, int lineNumber) {
-        return parseLine("?line", line, lineNumber);
+        return parseLine(line, "?line", lineNumber);
     }
 
     protected List<Token> parseLine(String line, String source, int lineNumber) {

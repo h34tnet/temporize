@@ -1,9 +1,31 @@
+//buildscript {
+//    repositories {
+//        maven {
+//            url "https://plugins.gradle.org/m2/"
+//        }
+//    }
+//    dependencies {
+//        classpath "com.github.jengelman.gradle.plugins:shadow:2.0.1"
+//    }
+//}
+//
+//plugins {
+//    id "com.github.johnrengelman.shadow" version "2.0.1"
+//}
+
+
 group 'net.h34t'
 version '1.0-SNAPSHOT'
 
-apply plugin: 'java'
+// apply plugin: 'java'
+apply(plugin: "application");
+//apply(plugin: "com.github.johnrengelman.shadow");
+
 
 sourceCompatibility = 1.8
+
+mainClassName = 'net.h34t.temporize.Temporize'
+
 
 repositories {
     mavenCentral()
