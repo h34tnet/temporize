@@ -1,7 +1,15 @@
 # Temporize
 
-Temporize is a template engine for java that compiles textual templates into java 
-source files, which can then be used from your code.
+Temporize is a template engine for java that compiles templates into java 
+source files, which can then be used from your code without the original template files.
+
+Other popular templating engines would be, e. g. 
+[freemarker](http://freemarker.org/), 
+[moustache.java](https://github.com/spullara/mustache.java) or
+[velocity](http://velocity.apache.org/).
+
+Compared to other engines Temporize is not designed to separate programmers from page designers
+as the project needs to be recompiled after changes in the templates.  
 
 ## Why + advantages
 
@@ -14,21 +22,26 @@ source files, which can then be used from your code.
   package the original template sources.
 * Bytecode obfuscators work on the templates.
 
-## Downsides
+## Limitations
 
 * After changing templates the project must be recompiled
+* The markup language is not very sophisticated, e.g. 
+  * conditionals can have a single condition that is true if "assigned and not empty"
+  * placeholder values are strings only  
  
 ## Supported markup
  
-* `{$placeholder}`: creates a setter to assign a value for this placeholder
-* `{$placeholder|modifier1|modifier2}`: setter that also applies the given modifiers to the value
-  Modifiers are String->String functions defined in a special class
+* `{$placeholder}`: creates a placeholder for a string value.
+* `{$placeholder|modifier1|modifier2}`: setter that also applies the given modifiers to the value.
+  Modifiers are String->String functions defined in a special class.
 * `{for $block}...{/for}`: creates a subclass from the content that can be
- assigned 0-n times 
-* `{include com.example.mytemplate as $mytemplate}`: imports a different template here
-  note that the import gets its own top level class and can be re-used in different templates
-* `{if $condition}...{/if}`: creates a conditional
-* `{if $condition}...{else}...{/if}`: creates a conditional with an alternative
+ assigned 0-n times.
+* `{include com.example.mytemplate as $mytemplate}`: imports a different template here.
+  note that the import gets its own top level class and can be re-used in different templates.
+* `{if $condition}...{/if}`: creates a conditional. currently, conditionals only check for 
+  empty strings or lists, depending on the type of `$condition`. 
+* `{if $condition}...{else}...{/if}`: creates a conditional with an alternative.
+* TODO: `{skip}...{/skip}` to exclude whole regions from parsing
 
 ## Example
 
@@ -48,13 +61,13 @@ Template `tpl/index/MyTemplate.html`:
       {else}
       <p>No points</p>
       {/if}
-      {import assoc/Footer as $footer}
+      {include inc.Footer as $footer}
     </body>
     </html>
     
 Compile this to the target src-gen directory with the "template" top level namespace 
 and this creates a class `template/index/MyTemplate.java` with the fully qualified name 
-`template.index.MyTemplate`.
+`index.MyTemplate`.
 
 The generated code might look something like this:
 
@@ -66,7 +79,7 @@ The generated code might look something like this:
         private boolean showIntroduction;
         private String introduction = "";
         private List<Point> pointList = new ArrayList<>();
-        private templates.assoc.Footer footer; 
+        private inc.Footer footer; 
         
         public MyTemplate() {}
         public MyTemplate(String title, ...) {this.title = title; ...}
@@ -191,6 +204,8 @@ E.g.
 
 ## TODOs
 
-* add boolean parameters if they only appear in conditionals
-* sanity checks to possible variable and method names defined in templates  
+* escaping!
+* default modifiers
+* sanity checks for invalid variable and method names defined in templates
 * have a go at continuous template builds via gradle: https://docs.gradle.org/current/userguide/continuous_build.html
+  or java: https://docs.oracle.com/javase/tutorial/essential/io/notification.html

@@ -13,6 +13,12 @@ public class Compiler {
     public Compiler() {
     }
 
+    /**
+     * @param node   the root node
+     * @param aClass the class of the nodes to find
+     * @param <A>    the type of the nodes to find
+     * @return all nodes of type A in the current context
+     */
     static <A extends ASTNode> List<A> getNodesOf(ASTNode node, Class<A> aClass) {
         if (node == null) {
             return new ArrayList<>();
@@ -20,6 +26,7 @@ public class Compiler {
 
         List<A> nodes = new ArrayList<>();
         if (node.getClass().isAssignableFrom(aClass)) {
+            //noinspection unchecked
             nodes.add((A) node);
         }
 
@@ -33,7 +40,6 @@ public class Compiler {
         nodes.addAll(getNodesOf(node.next(), aClass));
 
         return nodes;
-
     }
 
     static String createSetter(String className, String type, String instanceName, int ident) {
@@ -41,6 +47,35 @@ public class Compiler {
                 Ident.of(ident) + "        this." + instanceName + " = " + instanceName + ";\n" +
                 Ident.of(ident) + "        return this;\n" +
                 Ident.of(ident) + "    }";
+    }
+
+    static List<ASTNode> getNodesInContext(ASTNode current) {
+        List<ASTNode> nodes = new ArrayList<>();
+
+        while (current != null) {
+            if (current instanceof ASTNode.Conditional) {
+                nodes.addAll(getNodesInContext(((ASTNode.Conditional) current).consequent));
+                if (((ASTNode.Conditional) current).alternative != null)
+                    nodes.addAll(getNodesInContext(((ASTNode.Conditional) current).alternative));
+            } else
+                nodes.add(current);
+
+            current = current.next();
+        }
+
+        return nodes;
+    }
+
+    static ConditionalType getType(String name, List<ASTNode> nodesInContext) {
+        for (ASTNode node : nodesInContext)
+            if (node instanceof ASTNode.Variable && ((ASTNode.Variable) node).name.equals(name))
+                return ConditionalType.STRING;
+            else if (node instanceof ASTNode.Block && ((ASTNode.Block) node).blockName.equals(name))
+                return ConditionalType.BLOCK;
+            else if (node instanceof ASTNode.Include && ((ASTNode.Include) node).instance.equals(name))
+                return ConditionalType.INCLUDE;
+
+        return ConditionalType.BOOLEAN;
     }
 
     /**
@@ -55,11 +90,14 @@ public class Compiler {
     static String createStringOutput(ASTNode node, int indent) {
         if (node == null) {
             return "";
-
-        } else if (node instanceof ASTNode.NoOp) {
-            return createStringOutput(node.next(), indent);
         }
-        if (node instanceof ASTNode.ConstantValue) {
+
+        List<ASTNode> nodesInContext = getNodesInContext(node);
+
+        if (node instanceof ASTNode.NoOp) {
+            return createStringOutput(node.next(), indent);
+
+        } else if (node instanceof ASTNode.ConstantValue) {
             return Ident.of(indent) + "sb.append(\"" + StringEscapeUtils.escapeJava(((ASTNode.ConstantValue) node).value) + "\");\n"
                     + createStringOutput(node.next(), indent);
 
@@ -73,7 +111,24 @@ public class Compiler {
 
         } else if (node instanceof ASTNode.Conditional) {
             StringBuilder sb = new StringBuilder();
-            sb.append("\n").append(Ident.of(indent)).append("if (this.").append(((ASTNode.Conditional) node).name).append(" != null && !").append(((ASTNode.Conditional) node).name).append(".isEmpty()) {\n");
+            sb.append("\n").append(Ident.of(indent));
+            ConditionalType type = getType(((ASTNode.Conditional) node).name, nodesInContext);
+
+            switch (type) {
+                case STRING:
+                    sb.append("if (this.").append(((ASTNode.Conditional) node).name).append(" != null && !").append(((ASTNode.Conditional) node).name).append(".isEmpty()) {\n");
+                    break;
+                case BLOCK:
+                    sb.append("if (this.").append(((ASTNode.Conditional) node).name).append(" != null && !").append(((ASTNode.Conditional) node).name).append(".isEmpty()) {\n");
+                    break;
+                case INCLUDE:
+                    sb.append("if (this.").append(((ASTNode.Conditional) node).name).append(" != null) {\n");
+                    break;
+                case BOOLEAN:
+                    sb.append("if (this.").append(((ASTNode.Conditional) node).name).append(") {\n");
+                    break;
+            }
+
             sb.append(createStringOutput(((ASTNode.Conditional) node).consequent, indent + 1));
 
             if (((ASTNode.Conditional) node).alternative != null) {
@@ -110,6 +165,7 @@ public class Compiler {
         List<ASTNode.Variable> variables = getNodesOf(root, ASTNode.Variable.class);
         List<ASTNode.Block> blocks = getNodesOf(root, ASTNode.Block.class);
         List<ASTNode.Include> includes = getNodesOf(root, ASTNode.Include.class);
+        List<ASTNode.Conditional> conditionals = getNodesOf(root, ASTNode.Conditional.class);
 
         // process compilation of includes from the outside
         // note: this may generate infinite loops
@@ -120,6 +176,11 @@ public class Compiler {
         Set<String> variableNames = variables.stream().map(e -> e.name).distinct().collect(Collectors.toSet());
         List<String> blockNames = blocks.stream().map(e -> e.blockName).collect(Collectors.toList());
         List<String> includeNames = includes.stream().map(e -> e.instance).collect(Collectors.toList());
+
+        List<String> conditionalValues = conditionals.stream()
+                .filter(c -> !variableNames.contains(c.name) && !blockNames.contains(c.name) && !includeNames.contains(c.name))
+                .map(c -> c.name)
+                .collect(Collectors.toList());
 
         if (Utils.containsDuplicates(blockNames))
             throw new RuntimeException("Block variables must be unique:" + blockNames.stream().collect(Collectors.joining(", ")));
@@ -143,6 +204,7 @@ public class Compiler {
         List<String> constructorInitializers =
                 variables.stream().map(v -> "String " + v.name)
                         .distinct()
+                        .sorted()
                         .collect(Collectors.toList());
 
         // constructor parameters for blocks
@@ -152,6 +214,10 @@ public class Compiler {
         // constructor parameters for includes
         constructorInitializers.addAll(includes.stream()
                 .map(i -> i.classname + " " + i.instance).collect(Collectors.toList()));
+
+        // constructor parameters for includes
+        constructorInitializers.addAll(conditionalValues.stream()
+                .map(c -> "boolean " + c).collect(Collectors.toList()));
 
         StringBuilder sb = new StringBuilder();
         if (packageName != null) {
@@ -174,9 +240,13 @@ public class Compiler {
         for (ASTNode.Block block : blocks)
             sb.append(Ident.of(ident)).append("    private List<").append(block.blockClassName).append("> ").append(block.blockName).append(" = new ArrayList<>();\n");
 
-        // block property definitions
+        // include property definitions
         for (ASTNode.Include inc : includes)
             sb.append(Ident.of(ident)).append("    private ").append(inc.classname).append(" ").append(inc.instance).append(";\n");
+
+        // conditional property definitions
+        for (String cond : conditionalValues)
+            sb.append(Ident.of(ident)).append("    private boolean ").append(cond).append(";\n");
 
 
         sb.append("\n");
@@ -195,6 +265,7 @@ public class Compiler {
             variableNames.forEach(v -> sb.append(Ident.of(ident + 2)).append("this.").append(v).append(" = ").append(v).append(";\n"));
             blocks.forEach(b -> sb.append(Ident.of(ident + 2)).append("this.").append(b.blockName).append(" = ").append(b.blockName).append(";\n"));
             includes.forEach(b -> sb.append(Ident.of(ident + 2)).append("this.").append(b.instance).append(" = ").append(b.instance).append(";\n"));
+            conditionalValues.forEach(c -> sb.append(Ident.of(ident + 2)).append("this.").append(c).append(" = ").append(c).append(";\n"));
             sb.append(Ident.of(ident + 1)).append("}\n\n");
         }
 
@@ -209,6 +280,11 @@ public class Compiler {
         // include setters
         for (ASTNode.Include elem : includes)
             sb.append(Ident.of(ident)).append(createSetter(className, elem.classname, elem.instance, ident)).append("\n\n");
+
+        // conditional setters
+        for (String elem : conditionalValues)
+            sb.append(Ident.of(ident)).append(createSetter(className, "boolean", elem, ident)).append("\n\n");
+
 
         // output body
         sb.append(Ident.of(ident)).append("    @Override\n");

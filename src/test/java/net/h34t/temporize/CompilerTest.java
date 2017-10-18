@@ -108,4 +108,31 @@ public class CompilerTest {
         Assert.assertFalse("Code is empty", tpl.code.trim().isEmpty());
     }
 
+    @Test
+    public void compileConditionalBooleans() throws IOException {
+        Template tpl = new Compiler().compile("net.h34t", "TestClass", null,
+                new ASTBuilder().build(Parser.FULL.parse("{if $foo}foo{/if}")), s -> {
+                });
+
+        System.out.println(tpl.code);
+
+        Assert.assertEquals("TestClass", tpl.className);
+        Assert.assertEquals("net.h34t", tpl.packageName);
+        Assert.assertNotNull(tpl.code);
+        Assert.assertFalse("Code is empty", tpl.code.trim().isEmpty());
+    }
+
+    @Test
+    public void compileEmptyConditional() throws IOException {
+        Template tpl = new Compiler().compile("net.h34t", "TestClass", null,
+                new ASTBuilder().build(Parser.FULL.parse("{if $foo}{else}{/if}{$bar}")), s -> {
+                });
+
+        System.out.println(tpl.code);
+
+        Assert.assertEquals("TestClass", tpl.className);
+        Assert.assertEquals("net.h34t", tpl.packageName);
+        Assert.assertNotNull(tpl.code);
+        Assert.assertFalse("Code is empty", tpl.code.trim().isEmpty());
+    }
 }
