@@ -1,12 +1,6 @@
 package net.h34t.temporize;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.LineNumberReader;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
@@ -22,7 +16,8 @@ public class Parser {
             Token.Include.getCreator(),
             Token.Conditional.getCreator(),
             Token.ConditionalElse.getCreator(),
-            Token.ConditionalEnd.getCreator()
+            Token.ConditionalEnd.getCreator(),
+            Token.Skip.getCreator()
     });
 
     private final Token.Creator[] creators;

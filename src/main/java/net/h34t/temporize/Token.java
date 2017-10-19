@@ -279,6 +279,34 @@ public abstract class Token {
     }
 
     /**
+     * Skips are special, as they don't create a skip token, but a Literal
+     */
+    public static class Skip extends Token {
+
+        public static final Pattern PATTERN = Pattern.compile("\\{skip}(.*?)\\{/skip}");
+
+        public Skip(String contents, String source, int line, int offs) {
+            super(contents, source, line, offs);
+
+        }
+
+        public static Creator getCreator() {
+            return new Creator() {
+                @Override
+                public Pattern getPattern() {
+                    return PATTERN;
+                }
+
+                @Override
+                public Token create(MatchResult matchResult, String source, int line) {
+                    return new Literal(matchResult.group(1), source, line, matchResult.start());
+                }
+            };
+        }
+
+    }
+
+    /**
      * Literals aren't found by RegExps, they're the fillers before, between and after matches.
      */
     public static class Literal extends Token {
@@ -296,4 +324,5 @@ public abstract class Token {
         public abstract Token create(MatchResult matchResult, String source, int line);
 
     }
+
 }

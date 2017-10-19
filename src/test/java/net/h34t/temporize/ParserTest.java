@@ -134,4 +134,15 @@ public class ParserTest {
         Assert.assertNotNull(t.code);
         Assert.assertFalse(t.code.trim().isEmpty());
     }
+
+    @Test
+    public void testLiteral() throws IOException {
+        List<Token> tokens = Parser.FULL.parse("foo {skip}hello world, {$name}{/skip} bar");
+
+        Assert.assertEquals(1, tokens.size());
+        Assert.assertTrue(tokens.get(0) instanceof Token.Literal);
+        Assert.assertEquals("foo hello world, {$name} bar\n", tokens.get(0).contents);
+
+
+    }
 }

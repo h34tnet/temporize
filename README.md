@@ -41,7 +41,7 @@ as the project needs to be recompiled after changes in the templates.
 * `{if $condition}...{/if}`: creates a conditional. currently, conditionals only check for 
   empty strings or lists, depending on the type of `$condition`. 
 * `{if $condition}...{else}...{/if}`: creates a conditional with an alternative.
-* TODO: `{skip}...{/skip}` to exclude whole regions from parsing
+* `{skip}...{/skip}` to exclude whole regions from parsing. Note that `skip` sections can't be nested. 
 
 ## Example
 
@@ -204,7 +204,6 @@ E.g.
 
 ## TODOs
 
-* escaping!
 * default modifiers
 * sanity checks for invalid variable and method names defined in templates
 * have a go at continuous template builds via gradle: https://docs.gradle.org/current/userguide/continuous_build.html
