@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class Compiler {
@@ -83,11 +84,12 @@ public class Compiler {
      * <p>
      * It doesn't traverse Block bodies, which are compiled as a subclass.
      *
-     * @param node   the node to traverse
-     * @param indent level of indentation
+     * @param node     the node to traverse
+     * @param fnOutput callback that takes the expression to write and creates a writing command
+     * @param indent   level of indentation
      * @return the toString() body as a string of java code
      */
-    static String createStringOutput(ASTNode node, int indent) {
+    static String createStringOutput(ASTNode node, Function<String, String> fnOutput, Function<String, String> fnInclude, int indent) {
         if (node == null) {
             return "";
         }
@@ -95,19 +97,20 @@ public class Compiler {
         List<ASTNode> nodesInContext = getNodesInContext(node);
 
         if (node instanceof ASTNode.NoOp) {
-            return createStringOutput(node.next(), indent);
+            return createStringOutput(node.next(), fnOutput, fnInclude, indent);
 
         } else if (node instanceof ASTNode.ConstantValue) {
-            return Ident.of(indent) + "sb.append(\"" + StringEscapeUtils.escapeJava(((ASTNode.ConstantValue) node).value) + "\");\n"
-                    + createStringOutput(node.next(), indent);
+            return Ident.of(indent)
+                    + fnOutput.apply("\"" + StringEscapeUtils.escapeJava(((ASTNode.ConstantValue) node).value) + "\"") + ";\n"
+                    + createStringOutput(node.next(), fnOutput, fnInclude, indent);
 
         } else if (node instanceof ASTNode.Variable) {
             StringBuilder variable = new StringBuilder("this." + ((ASTNode.Variable) node).name);
             for (String modifier : ((ASTNode.Variable) node).modifiers)
                 variable = new StringBuilder(modifier + "(" + variable + ")");
 
-            return Ident.of(indent) + "sb.append(" + variable.toString() + ");\n"
-                    + createStringOutput(node.next(), indent);
+            return Ident.of(indent) + fnOutput.apply(variable.toString()) + ";\n"
+                    + createStringOutput(node.next(), fnOutput, fnInclude, indent);
 
         } else if (node instanceof ASTNode.Conditional) {
             StringBuilder sb = new StringBuilder();
@@ -129,25 +132,25 @@ public class Compiler {
                     break;
             }
 
-            sb.append(createStringOutput(((ASTNode.Conditional) node).consequent, indent + 1));
+            sb.append(createStringOutput(((ASTNode.Conditional) node).consequent, fnOutput, fnInclude, indent + 1));
 
             if (((ASTNode.Conditional) node).alternative != null) {
                 sb.append("\n").append(Ident.of(indent)).append("} else {\n");
-                sb.append(createStringOutput(((ASTNode.Conditional) node).alternative, indent + 1));
+                sb.append(createStringOutput(((ASTNode.Conditional) node).alternative, fnOutput, fnInclude, indent + 1));
             }
 
             sb.append(Ident.of(indent)).append("}\n\n");
-            sb.append(createStringOutput(node.next(), indent));
+            sb.append(createStringOutput(node.next(), fnOutput, fnInclude, indent));
             return sb.toString();
 
         } else if (node instanceof ASTNode.Block) {
             return "\n" + Ident.of(indent) + "for (" + ((ASTNode.Block) node).blockClassName + " _block : " + ((ASTNode.Block) node).blockName + ")\n" +
-                    Ident.of(indent + 1) + "sb.append(_block.toString());\n"
-                    + createStringOutput(node.next(), indent);
+                    Ident.of(indent + 1) + fnInclude.apply("_block") + ";\n"
+                    + createStringOutput(node.next(), fnOutput, fnInclude, indent);
 
         } else if (node instanceof ASTNode.Include) {
-            return Ident.of(indent) + "sb.append(" + ((ASTNode.Include) node).instance + ".toString());\n" +
-                    createStringOutput(node.next(), indent);
+            return Ident.of(indent) + fnInclude.apply(((ASTNode.Include) node).instance) + ";\n" +
+                    createStringOutput(node.next(), fnOutput, fnInclude, indent);
 
         } else {
             throw new RuntimeException("Undefined ASTNode " + node.getClass().getName());
@@ -222,6 +225,7 @@ public class Compiler {
         StringBuilder sb = new StringBuilder();
         if (packageName != null) {
             sb.append("package ").append(packageName).append(";\n\n");
+            sb.append("import java.io.Writer;\n\n");
             if (blocks.size() > 0) {
                 sb.append("import java.util.List;\n");
                 sb.append("import java.util.ArrayList;\n\n");
@@ -291,11 +295,23 @@ public class Compiler {
         sb.append(Ident.of(ident)).append("    public String toString() {\n");
         sb.append(Ident.of(ident)).append("        StringBuilder sb = new StringBuilder();\n");
 
-        sb.append(createStringOutput(root, ident + 2));
+        sb.append(createStringOutput(root,
+                s -> "sb.append(" + s + ")",
+                s -> "sb.append(" + s + ".toString())",
+                ident + 2));
 
         sb.append(Ident.of(ident)).append("\n");
         sb.append(Ident.of(ident)).append("        return sb.toString();\n");
+        sb.append(Ident.of(ident)).append("    }\n\n");
+
+        // output body
+        sb.append(Ident.of(ident)).append("    public void write(Writer w) throws java.io.IOException {\n");
+        sb.append(createStringOutput(root,
+                s -> "w.write(" + s + ")",
+                s -> s + ".write(w)",
+                ident + 2));
         sb.append(Ident.of(ident)).append("    }\n");
+
 
         for (ASTNode.Block block : blocks) {
             sb.append("\n").append(compile(null, block.blockClassName, modifier, block.branch, ident + 1, includeHandler));

@@ -67,16 +67,18 @@ public abstract class Token {
      */
     public static class Variable extends Token {
 
-        public static Pattern EXP = Pattern.compile("\\{\\$([a-z][\\w]*(|[\\w]))*}");
+        public static Pattern EXP = Pattern.compile("\\{\\$([a-z][\\w]*)((\\|[\\w]+)*)}");
 
         public final String variableName;
         public final String[] modifiers;
 
-        public Variable(String contents, String variableName, String source, int line, int offs) {
+        public Variable(String contents, String variableName, String modifiers, String source, int line, int offs) {
             super(contents, source, line, offs);
-            String[] parts = variableName.split("\\|");
-            this.variableName = parts[0];
-            this.modifiers = Arrays.copyOfRange(parts, 1, parts.length);
+            // String[] parts = variableName.split("\\|");
+            this.variableName = variableName;
+            this.modifiers = modifiers.isEmpty()
+                    ? new String[]{}
+                    : modifiers.substring(1).split("\\|");
 
             checkValidity(variableName, this);
             for (String mod : this.modifiers)
@@ -93,7 +95,8 @@ public abstract class Token {
 
                 @Override
                 public Token create(MatchResult matchResult, String source, int line) {
-                    return new Variable(matchResult.group(), matchResult.group(1), source, line, matchResult.start());
+                    return new Variable(matchResult.group(),
+                            matchResult.group(1), matchResult.group(2), source, line, matchResult.start());
                 }
             };
         }
