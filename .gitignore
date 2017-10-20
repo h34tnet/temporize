@@ -146,4 +146,4 @@ gradle-app.setting
 
 
 # generated test-template directory
-demo/tpl-gen/
+tpl-gen/

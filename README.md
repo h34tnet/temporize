@@ -1,45 +1,38 @@
 # Temporize
 
-Temporize is a template engine for java that compiles templates into java 
-source files, which can then be used from your code without the original template files.
+Temporize is a template engine for java that statically compiles templates into java source files, which can then be 
+used from your code without the original template files.
 
-Other popular templating engines would be, e. g. 
-[freemarker](http://freemarker.org/), 
-[moustache.java](https://github.com/spullara/mustache.java) or
-[velocity](http://velocity.apache.org/).
-
-Compared to other engines Temporize is not designed to separate programmers from page designers
-as the project needs to be recompiled after changes in the templates.  
+Compared to other engines Temporize is not necessarily designed to separate programmers from page designers as the 
+project needs to be recompiled after changes in the templates.  
 
 ## Why + advantages
 
-* Speed - it's ~30% faster than Rocker at the https://github.com/mbosecke/template-benchmark 
-  Stock benchmark
-* No file IO during runtime (i.e. no blocking, IO is done only during the compilation step)
-  (except for the JVMs startup itself)
+* Speed - it's ~30%-50% faster than Rocker at the https://github.com/mbosecke/template-benchmark Stock benchmark
+* No file IO during runtime (i.e. no blocking, IO is done only during the compilation step) (except for the JVMs 
+  startup itself)
 * IDE auto-completion support for all IDEs without any extra plug-ins
-* Packaging and distributing the compiled templates is easy. There is no need to 
-  package the original template sources.
+* Packaging and distributing the compiled templates is easy. There is no need to package the original template sources.
 * Bytecode obfuscators work on the templates.
 
 ## Limitations
 
 * After changing templates the project must be recompiled
 * The markup language is not very sophisticated, e.g. 
-  * conditionals can have a single condition that is true if "assigned and not empty"
+  * conditionals can have a single condition that is true if "assigned and not empty" (or assignable booleans, if the
+    conditionals aren't used as placeholders or blocks)
   * placeholder values are strings only  
  
 ## Supported markup
  
 * `{$placeholder}`: creates a placeholder for a string value.
 * `{$placeholder|modifier1|modifier2}`: setter that also applies the given modifiers to the value.
-  Modifiers are String->String functions defined in a special class.
-* `{for $block}...{/for}`: creates a subclass from the content that can be
- assigned 0-n times.
+  Modifiers are static String->String functions defined in a special class.
+* `{for $block}...{/for}`: creates a subclass from the content that can be assigned 0-n times.
 * `{include com.example.mytemplate as $mytemplate}`: imports a different template here.
-  note that the import gets its own top level class and can be re-used in different templates.
+  the import gets its own top level class and can be re-used in different templates.
 * `{if $condition}...{/if}`: creates a conditional. currently, conditionals only check for 
-  empty strings or lists, depending on the type of `$condition`. 
+  empty strings or lists, depending on the type of `$condition`, or they're booleans, if not used anywhere else. 
 * `{if $condition}...{else}...{/if}`: creates a conditional with an alternative.
 * `{skip}...{/skip}` to exclude whole regions from parsing. Note that `skip` sections can't be nested. 
 
@@ -65,13 +58,15 @@ Template `tpl/index/MyTemplate.html`:
     </body>
     </html>
     
-Compile this to the target src-gen directory with the "template" top level namespace 
-and this creates a class `template/index/MyTemplate.java` with the fully qualified name 
-`index.MyTemplate`.
+Compile this to the target src-gen directory by invoking
+ 
+    java -jar temporize.jar tpl src/main/template my.Modifiers
+ 
+This creates a class `src/main/template/index/MyTemplate.java`.
 
 The generated code might look something like this:
 
-    package template.template.index; 
+    package index; 
     
     class MyTemplate {
         private String title = "";
@@ -86,11 +81,14 @@ The generated code might look something like this:
         
         public MyTemplate setTitle(String title) {this.title = title;}
         ...
-        public MyTemplate showIntroduction(boolean showIntroduction) {...}
-        public MyTemplate setPointList(Collection<Point> pointList) {...}
-        public MyTemplate setFooter(template.assoc.Footer footer) {...}
+        public MyTemplate setShowIntroduction(boolean showIntroduction) {...}
+        public MyTemplate setPointList(List<Point> pointList) {...}
+        public MyTemplate setFooter(inc.Footer footer) {...}
         ...
-        public MyTemplate write(Writer writer) {...}
+        public MyTemplate write(Writer writer) { 
+            /* same as toString() below, just with a writer instead of a 
+               StringBuilder. */
+        }
         ...
         @Override
         public String toString() {
@@ -129,58 +127,63 @@ The methods toString or write are used to execute the template and get the resul
 in your code you could do:
 
     List<Points> points = Arrays.asList(
-        new Point().setTarget("current news").setText("news"),
-        new Point().setTarget("archives").setText("archives"));
+        new Point().setTarget("/news").setText("News"),
+        /* or alternatively */
+        new Point("/arch", "Archives"));
 
-    System.out.println(new MyTemplate()
+    System.out.print(new MyTemplate()
         .setTitle("hello world")
         .setHeadline("welcome, stranger")
         .showIntroduction(true)
         .setIntroduction("stay a while and listen!")
         .setPointList(points)
-        .setFooter(new Footer().setCopyright(String.valueOf(2017)));
+        .setFooter(new Footer().setCopyright("2017"));
 
-## Notes
+or, even faster: 
 
-* Top level templates and fully qualified includes generate top level classes,
- while blocks create inner classes.
- 
-* There are some pre-defined modifiers but additional ones can be added.
+    Writer writer = new StringWriter();
 
-* No reflection at runtime.
+    new MyTemplate()
+        .setTitle("hello world")
+        .setHeadline("welcome, stranger")
+        .showIntroduction(true)
+        .setIntroduction("stay a while and listen!")
+        .setPointList(points)
+        .setFooter(new Footer().setCopyright("2017"))
+        .write(writer);
+        
+     System.out.print(writer.toString());
 
 ## Benchmark
 
 * It's fast. On my computer, the https://github.com/mbosecke/template-benchmark's 
-  fastest engine is Rocker, with 49.271 ops/s. Temporize gets 66.275 ops/s.  
-* Compilation may not as fast but that doesn't really matter because it happens at 
-  project compile time instead of runtime
+  fastest engine is Rocker, with 49.072 ops/s. Temporize gets 76.054 ops/s.  
+
   
-  
-    Benchmark                     Mode  Cnt      Score     Error  Units
-    Freemarker.benchmark         thrpt   50  20334,079 ± 173,635  ops/s
-    Handlebars.benchmark         thrpt   50  24007,420 ± 138,765  ops/s
-    Mustache.benchmark           thrpt   50  26920,209 ± 104,248  ops/s
-    Pebble.benchmark             thrpt   50  43074,752 ± 316,106  ops/s
-    Rocker.benchmark             thrpt   50  49271,911 ± 322,755  ops/s
-    Temporize.benchmark          thrpt   50  66275,758 ± 458,256  ops/s
-    Thymeleaf.benchmark          thrpt   50   1907,132 ±  24,483  ops/s
-    Trimou.benchmark             thrpt   50  28742,674 ± 232,416  ops/s
-    Velocity.benchmark           thrpt   50  26137,320 ± 141,420  ops/s
+    Benchmark                     Mode  Cnt      Score      Error  Units
+    Freemarker.benchmark         thrpt   50  20428,242 ±  129,919  ops/s
+    Handlebars.benchmark         thrpt   50  23626,078 ±  237,292  ops/s
+    Mustache.benchmark           thrpt   50  26602,105 ±  221,318  ops/s
+    Pebble.benchmark             thrpt   50  43328,502 ±  375,950  ops/s
+    Rocker.benchmark             thrpt   50  49072,283 ±  499,747  ops/s
+    TemporizeToString.benchmark  thrpt   50  53945,231 ±  309,228  ops/s
+    TemporizeWriter.benchmark    thrpt   50  76054,989 ± 1351,153  ops/s
+    Thymeleaf.benchmark          thrpt   50   1888,219 ±   28,010  ops/s
+    Trimou.benchmark             thrpt   50  28877,322 ±  258,909  ops/s
+    Velocity.benchmark           thrpt   50  25800,604 ±  230,428  ops/s
+
 
 ## How to use
 
+### Converting manually
 
-
-### Call manually
-
-Converts the raw templates into classes on execution. Per default only 
+Convert the raw templates into classes on execution. Per default only 
 files with a `.temporize.` in the name are processed.  
 
 1. parameter: input directory where the raw templates are stored
 2. parameter: the output directory where to store the classes
 3. parameter: the fully qualified name of the class containing static modifier methods.  
-   The `Modifiers` doesn't reference a real file, only an `import static to add to the files.`    
+   The `Modifiers` doesn't reference an existing file, but adds an `import static package.name.of.Modifiers;`    
 
 E.g.
 
@@ -208,4 +211,3 @@ E.g.
 * sanity checks for invalid variable and method names defined in templates
 * have a go at continuous template builds via gradle: https://docs.gradle.org/current/userguide/continuous_build.html
   or java: https://docs.oracle.com/javase/tutorial/essential/io/notification.html
-* preview function with generated test data

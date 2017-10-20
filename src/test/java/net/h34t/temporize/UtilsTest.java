@@ -22,7 +22,6 @@ public class UtilsTest {
         Assert.assertFalse(Utils.containsDuplicates(null));
     }
 
-
     @Test
     public void containsDuplicatesOneElement() throws Exception {
         Assert.assertFalse(Utils.containsDuplicates(Collections.singletonList("a")));
@@ -38,7 +37,6 @@ public class UtilsTest {
         Assert.assertFalse(Utils.containsDuplicates(Arrays.asList("a", "A")));
     }
 
-
     @Test
     public void ucFirst() throws Exception {
         Assert.assertEquals("Foo", Utils.ucFirst("foo"));
@@ -53,5 +51,4 @@ public class UtilsTest {
     public void toClassName() throws Exception {
         ucFirst();
     }
-
 }
