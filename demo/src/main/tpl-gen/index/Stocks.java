@@ -9,20 +9,13 @@ import static net.h34t.temporizedemo.Modifiers.*;
 
 public class Stocks {
 
-    private String bar = "";
     private List<Items> items = new ArrayList<>();
 
     public Stocks() {
     }
 
-    public Stocks(String bar, List<Items> items) {
-        this.bar = bar;
+    public Stocks(List<Items> items) {
         this.items = items;
-    }
-
-    public Stocks setBar(String bar) {
-        this.bar = bar;
-        return this;
     }
 
     public Stocks setItems(List<Items> items) {
@@ -37,9 +30,7 @@ public class Stocks {
 
         for (Items _block : items)
             sb.append(_block.toString());
-        sb.append("\n    </tbody>\n</table>\n");
-        sb.append(this.bar);
-        sb.append("\n</body>\n</html>\n");
+        sb.append("\n    </tbody>\n</table>\n</body>\n</html>\n");
 
         return sb.toString();
     }
@@ -49,9 +40,7 @@ public class Stocks {
 
         for (Items _block : items)
             _block.write(w);
-        w.write("\n    </tbody>\n</table>\n");
-        w.write(this.bar);
-        w.write("\n</body>\n</html>\n");
+        w.write("\n    </tbody>\n</table>\n</body>\n</html>\n");
     }
 
     public static class Items {
@@ -62,19 +51,21 @@ public class Stocks {
         private String negativeClass = "";
         private String change = "";
         private String name = "";
+        private String index = "";
         private String url = "";
         private String ratio = "";
 
         public Items() {
         }
 
-        public Items(String change, String name, String negativeClass, String price, String ratio, String rowClass, String symbol, String url) {
+        public Items(String change, String index, String name, String negativeClass, String price, String ratio, String rowClass, String symbol, String url) {
             this.symbol = symbol;
             this.rowClass = rowClass;
             this.price = price;
             this.negativeClass = negativeClass;
             this.change = change;
             this.name = name;
+            this.index = index;
             this.url = url;
             this.ratio = ratio;
         }
@@ -109,6 +100,11 @@ public class Stocks {
             return this;
         }
 
+        public Items setIndex(String index) {
+            this.index = index;
+            return this;
+        }
+
         public Items setUrl(String url) {
             this.url = url;
             return this;
@@ -124,7 +120,9 @@ public class Stocks {
             StringBuilder sb = new StringBuilder();
             sb.append("\n    <tr class=\"");
             sb.append(this.rowClass);
-            sb.append("\">\n        <td>{{index}}</td>\n        <td>\n            <a href=\"/stocks/");
+            sb.append("\">\n        <td>");
+            sb.append(this.index);
+            sb.append("</td>\n        <td>\n            <a href=\"/stocks/");
             sb.append(this.symbol);
             sb.append("\">");
             sb.append(this.symbol);
@@ -150,7 +148,9 @@ public class Stocks {
         public void write(Writer w) throws java.io.IOException {
             w.write("\n    <tr class=\"");
             w.write(this.rowClass);
-            w.write("\">\n        <td>{{index}}</td>\n        <td>\n            <a href=\"/stocks/");
+            w.write("\">\n        <td>");
+            w.write(this.index);
+            w.write("</td>\n        <td>\n            <a href=\"/stocks/");
             w.write(this.symbol);
             w.write("\">");
             w.write(this.symbol);
