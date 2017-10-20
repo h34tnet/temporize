@@ -136,13 +136,10 @@ public class CompilerTest {
         Assert.assertFalse("Code is empty", tpl.code.trim().isEmpty());
     }
 
-    /*
-     * this is actually legal and works fine
-     */
-    @Test
+    @Test(expected = RuntimeException.class)
     public void compileTwinAssignments() throws IOException {
         new Compiler().compile("foo", "Bar", null, new ASTBuilder().build(
-                Parser.FULL.parse("{$foo}{for $Foo}bar{/for}")
+                Parser.FULL.parse("{for $foo}bar{/for}{for $Foo}bar{/for}")
         ), s -> {
         });
     }
