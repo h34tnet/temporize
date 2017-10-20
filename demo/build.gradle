@@ -1,0 +1,39 @@
+group 'net.h34t'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+sourceSets {
+    main {
+        java {
+            // srcDirs 'src/main/java'
+            srcDirs 'src/main/tpl-gen'
+        }
+    }
+
+
+}
+
+task temporize() << {
+    javaexec {
+        main = "-jar"
+        args = [
+                "../build/libs/temporize-1.0-SNAPSHOT-all.jar",
+                "tpl",
+                "src/main/tpl-gen",
+                "net.h34t.temporizedemo.Modifiers"
+        ]
+    }
+}
+
+build.dependsOn temporize
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}

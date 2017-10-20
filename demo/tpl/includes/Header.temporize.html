@@ -1,0 +1,3 @@
+<div class="header">{$header} - {if $isLoggedIn}welcome, <a href="/user/{$username|urlenc}">{$username|html}</a>{else}{include
+    includes.login.Login as $login}{/if}
+</div>

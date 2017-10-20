@@ -208,3 +208,4 @@ E.g.
 * sanity checks for invalid variable and method names defined in templates
 * have a go at continuous template builds via gradle: https://docs.gradle.org/current/userguide/continuous_build.html
   or java: https://docs.oracle.com/javase/tutorial/essential/io/notification.html
+* preview function with generated test data

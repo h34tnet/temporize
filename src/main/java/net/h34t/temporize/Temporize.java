@@ -63,7 +63,7 @@ public class Temporize {
                                 List<Token> tokens = Parser.FULL.parse(t);
                                 ASTNode root = new ASTBuilder().build(tokens);
                                 Template tpl = new Compiler().compile(packageName, className, modifier, root, inc -> {
-                                    System.out.println("Include " + inc);
+                                    System.out.println(" * Includes " + inc);
                                 });
 
                                 File packageOutDirectory = tf.getOutputDirectory(outDirectory);

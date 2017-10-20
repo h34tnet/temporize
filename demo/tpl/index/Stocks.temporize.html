@@ -55,7 +55,7 @@
     <tbody>
     {for $items}
     <tr class="{$rowClass}">
-        <td>{{index}}</td>
+        <td>{$index}</td>
         <td>
             <a href="/stocks/{$symbol}">{$symbol}</a>
         </td>
@@ -71,6 +71,5 @@
     {/for}
     </tbody>
 </table>
-{$bar}
 </body>
 </html>
