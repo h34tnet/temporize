@@ -218,4 +218,9 @@ Don't forget to substitute for your actual paths.
 * sanity checks for invalid variable and method names defined in templates
 * have a go at continuous template builds via gradle: https://docs.gradle.org/current/userguide/continuous_build.html
   or java: https://docs.oracle.com/javase/tutorial/essential/io/notification.html
-* Implmenet multiline `skip` and `comment`. 
+* Implement multi line `skip` and `comment`.
+* Add file existence check for `include`s. 
+
+## License
+
+This software is published under the [MIT License](LICENSE.txt)
