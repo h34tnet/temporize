@@ -21,13 +21,17 @@ project needs to be recompiled after changes in the templates.
 * The markup language is not very sophisticated, e.g. 
   * conditionals can have a single condition that is true if "assigned and not empty" (or assignable booleans, if the
     conditionals aren't used as placeholders or blocks)
-  * placeholder values are strings only  
+  * placeholder values are strings only
+* Generated templates are NOT exact concerning whitespace. Currently, all line endings are converted to unix-style
+  line endings (`\n`). Also, a trailing line ending is appended at the end of the file. 
  
 ## Supported markup
  
 * `{$placeholder}`: creates a placeholder for a string value.
 * `{$placeholder|modifier1|modifier2}`: setter that also applies the given modifiers to the value.
   Modifiers are static String->String functions defined in a special class.
+* `{*$placeholder}`: creates a placeholder for a string value with a "def" Modifier added.
+  This is usable for common escaping or encoding actions, e.g. html-entity encoding.
 * `{for $block}...{/for}`: creates a subclass from the content that can be assigned 0-n times.
 * `{include com.example.mytemplate as $mytemplate}`: imports a different template here.
   the import gets its own top level class and can be re-used in different templates.
@@ -38,7 +42,7 @@ project needs to be recompiled after changes in the templates.
 
 ## Example
 
-Template `tpl/index/MyTemplate.html`:
+Template `tpl/index/MyTemplate.temporize.html`:
 
     <html>
     <head>
@@ -60,9 +64,9 @@ Template `tpl/index/MyTemplate.html`:
     
 Compile this to the target src-gen directory by invoking
  
-    java -jar temporize.jar tpl src/main/template my.Modifiers
+    java -jar temporize.jar tpl/ src/main/tpl-gen/ my.Modifiers
  
-This creates a class `src/main/template/index/MyTemplate.java`.
+This creates a class `src/main/tpl-gen/index/MyTemplate.java`.
 
 The generated code might look something like this:
 
@@ -183,9 +187,10 @@ files with a `.temporize.` in the name are processed.
 1. parameter: input directory where the raw templates are stored
 2. parameter: the output directory where to store the classes
 3. parameter: the fully qualified name of the class containing static modifier methods.  
-   The `Modifiers` doesn't reference an existing file, but adds an `import static package.name.of.Modifiers;`    
+   The `Modifiers` doesn't reference an existing file, it only adds an `import static package.name.of.Modifiers.*;` #
+   import.
 
-E.g.
+#### Example
 
  `java -jar temporize.jar tpl/ src_gen/ package.name.of.Modifiers`
 
@@ -205,9 +210,12 @@ E.g.
      
     build.dependsOn temporize
 
-## TODOs
+Don't forget to substitute for your actual paths.
 
-* default modifiers
+## Known bugs and TODOs
+
+* Stricter line ending handling. Currently only linux `\n` are generated, `\r`s are lost. 
 * sanity checks for invalid variable and method names defined in templates
 * have a go at continuous template builds via gradle: https://docs.gradle.org/current/userguide/continuous_build.html
   or java: https://docs.oracle.com/javase/tutorial/essential/io/notification.html
+* Implmenet multiline `skip` and `comment`. 

@@ -4,7 +4,7 @@ import java.io.File;
 import java.util.regex.Pattern;
 
 /**
- * File that represents an un-compiled source template.
+ * Helper class that represents an un-compiled source template to simplify filename to classname conversions.
  */
 public class TemplateFile {
 
