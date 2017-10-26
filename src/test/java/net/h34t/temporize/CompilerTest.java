@@ -83,9 +83,9 @@ public class CompilerTest {
 
     @Test(expected = RuntimeException.class)
     public void checkIncludeForCollision() throws Exception {
-        System.out.println(new Compiler().compile(null, "Foo", "a.b.C",
+        new Compiler().compile(null, "Foo", "a.b.C",
                 new ASTBuilder().build(Parser.FULL.parse("{include a.b.C as $var}{for $var}{/for}")), s -> {
-                }).code);
+                });
     }
 
     @Test(expected = RuntimeException.class)
@@ -114,8 +114,6 @@ public class CompilerTest {
                 new ASTBuilder().build(Parser.FULL.parse("{if $foo}foo{/if}")), s -> {
                 });
 
-        System.out.println(tpl.code);
-
         Assert.assertEquals("TestClass", tpl.className);
         Assert.assertEquals("net.h34t", tpl.packageName);
         Assert.assertNotNull(tpl.code);
@@ -128,8 +126,6 @@ public class CompilerTest {
                 new ASTBuilder().build(Parser.FULL.parse("{if $foo}{else}{/if}{$bar}")), s -> {
                 });
 
-        System.out.println(tpl.code);
-
         Assert.assertEquals("TestClass", tpl.className);
         Assert.assertEquals("net.h34t", tpl.packageName);
         Assert.assertNotNull(tpl.code);
@@ -137,10 +133,19 @@ public class CompilerTest {
     }
 
     @Test(expected = RuntimeException.class)
-    public void compileTwinAssignments() throws IOException {
+    public void compileEvilTwinBlockAssignments() throws IOException {
         new Compiler().compile("foo", "Bar", null, new ASTBuilder().build(
                 Parser.FULL.parse("{for $foo}bar{/for}{for $Foo}bar{/for}")
         ), s -> {
         });
     }
+
+    @Test(expected = RuntimeException.class)
+    public void compileEvilTwinIncludeAssignments() throws IOException {
+        new Compiler().compile("foo", "Bar", null, new ASTBuilder().build(
+                Parser.FULL.parse("{include a.b.C as $bar}{include a.b.C as $Bar}")
+        ), s -> {
+        });
+    }
+
 }

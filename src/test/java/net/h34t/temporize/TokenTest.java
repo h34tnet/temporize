@@ -2,9 +2,6 @@ package net.h34t.temporize;
 
 import org.junit.Test;
 
-/**
- *
- */
 public class TokenTest {
     @Test
     public void checkValidity() throws Exception {

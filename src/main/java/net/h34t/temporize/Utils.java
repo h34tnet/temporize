@@ -27,4 +27,9 @@ public class Utils {
     public static String toClassName(String name) {
         return ucFirst(name);
     }
+
+    public static String normalizeVarName(String name) {
+        return ucFirst(name);
+    }
+
 }

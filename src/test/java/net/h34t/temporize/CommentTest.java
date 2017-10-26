@@ -24,9 +24,9 @@ public class CommentTest {
     @Test
     public void testCommentMultiline() throws IOException {
         List<Token> tokens = Parser.FULL.parse("{comment}hello\nworld{/comment}");
+        // this is just the trailing newline
         Assert.assertEquals(0, tokens.size());
     }
-
 
     @Test
     public void testCommentMultiline2() throws IOException {

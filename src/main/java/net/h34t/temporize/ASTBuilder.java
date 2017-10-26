@@ -61,13 +61,13 @@ public class ASTBuilder {
                 stack.push(conditional);
 
             } else if (token instanceof Token.ConditionalElse) {
-                if (!(stack.peek() instanceof ASTNode.Conditional))
-                    throw new RuntimeException("Else without corresponding Conditional-If at " + token.line + ":" + token.offs);
+                if (stack.empty() || !(stack.peek() instanceof ASTNode.Conditional))
+                    throw new MismatchedBranchException("Else without corresponding Conditional-If at " + token.line + ":" + token.offs);
 
                 current = stack.peek();
 
                 if (((ASTNode.Conditional) current).alternative != null) {
-                    throw new RuntimeException("Double Else branching at " + token.line + ":" + token.offs);
+                    throw new MismatchedBranchException("Double Else branching at " + token.line + ":" + token.offs);
                 }
 
                 ASTNode.NoOp elseNode = new ASTNode.NoOp(current);
@@ -75,7 +75,7 @@ public class ASTBuilder {
                 current = elseNode;
 
             } else if (token instanceof Token.ConditionalEnd) {
-                if (!(stack.peek() instanceof ASTNode.Conditional))
+                if (stack.empty() || !(stack.peek() instanceof ASTNode.Conditional))
                     throw new MismatchedBranchException("Conditional-End without corresponding Conditional-If at " + token.line + ":" + token.offs);
 
                 current = stack.pop();

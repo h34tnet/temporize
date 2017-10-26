@@ -176,9 +176,9 @@ public class Compiler {
             includeHandler.accept(include.classname);
 
         // extract the variable names
-        Set<String> variableNames = variables.stream().map(e -> e.name).distinct().collect(Collectors.toSet());
-        List<String> blockNames = blocks.stream().map(e -> e.blockName).collect(Collectors.toList());
-        List<String> includeNames = includes.stream().map(e -> e.instance).collect(Collectors.toList());
+        Set<String> variableNames = variables.stream().map(e -> Utils.normalizeVarName(e.name)).distinct().collect(Collectors.toSet());
+        List<String> blockNames = blocks.stream().map(e -> Utils.normalizeVarName(e.blockName)).collect(Collectors.toList());
+        List<String> includeNames = includes.stream().map(e -> Utils.normalizeVarName(e.instance)).collect(Collectors.toList());
 
         List<String> conditionalValues = conditionals.stream()
                 .filter(c -> !variableNames.contains(c.name) && !blockNames.contains(c.name) && !includeNames.contains(c.name))
@@ -289,19 +289,12 @@ public class Compiler {
         for (String elem : conditionalValues)
             sb.append(Ident.of(ident)).append(createSetter(className, "boolean", elem, ident)).append("\n\n");
 
-
         // output body
         sb.append(Ident.of(ident)).append("    @Override\n");
         sb.append(Ident.of(ident)).append("    public String toString() {\n");
-        sb.append(Ident.of(ident)).append("        StringBuilder sb = new StringBuilder();\n");
-
-        sb.append(createStringOutput(root,
-                s -> "sb.append(" + s + ")",
-                s -> "sb.append(" + s + ".toString())",
-                ident + 2));
-
-        sb.append(Ident.of(ident)).append("\n");
-        sb.append(Ident.of(ident)).append("        return sb.toString();\n");
+        sb.append(Ident.of(ident)).append("        Writer w = new StringWriter();\n");
+        sb.append(Ident.of(ident)).append("        write(w);\n");
+        sb.append(Ident.of(ident)).append("        return w.toString();\n");
         sb.append(Ident.of(ident)).append("    }\n\n");
 
         // output body
