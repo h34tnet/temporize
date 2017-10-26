@@ -118,7 +118,7 @@ public class Parser {
     /**
      * The actual parsing method. Returns all tokens found in a single line.
      * <p>
-     * TODO parsing is doing a lot of unnecessariy work by searching for every token and using only the first one
+     * TODO parsing is doing a lot of unnecessary work by searching for every token and using only the first one
      *
      * @param line       the line to be parsed
      * @param source     the source identifier for debugging and error reporting purposes

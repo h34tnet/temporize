@@ -15,7 +15,7 @@ public class Temporize {
         try {
             if (args.length < 3) {
                 System.out.println("Usage: java -jar temporize.jar tpl/ output/ path/to/Modifiers.java");
-                System.out.println("       Compiles all templates with classname according to the pattern");
+                System.out.println("       Compiles all templates with a file name according to the pattern");
                 System.out.println("       [name].temporize.[ending] into precompiled templates and saves");
                 System.out.println("       the java source files to output.");
 
@@ -33,12 +33,6 @@ public class Temporize {
                     System.err.println("Couldn't find input directory " + inDirectory.getName());
                     System.exit(1);
                 }
-
-
-//            if (!modifierPath.exists() || !modifierPath.isFile()) {
-//                System.err.println("Couldn't find modifier file " + modifierPath.getName());
-//                System.exit(1);
-//            }
 
                 if ((!outDirectory.exists() && !outDirectory.mkdirs()) || !outDirectory.isDirectory()) {
                     System.err.println("Couldn't create output directory " + outDirectory.getName());
@@ -93,6 +87,8 @@ public class Temporize {
 
             if (verbose)
                 e.printStackTrace();
+
+            System.exit(1);
         }
     }
 
