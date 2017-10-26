@@ -38,7 +38,10 @@ project needs to be recompiled after changes in the templates.
 * `{if $condition}...{/if}`: creates a conditional. currently, conditionals only check for 
   empty strings or lists, depending on the type of `$condition`, or they're booleans, if not used anywhere else. 
 * `{if $condition}...{else}...{/if}`: creates a conditional with an alternative.
-* `{skip}...{/skip}` to exclude whole regions from parsing. Note that `skip` sections can't be nested. 
+* `{skip}...{/skip}` to exclude whole regions from parsing. Everything inside `skip` sections is emitted as a literal.
+  Note that `skip` sections can't be nested. 
+* `{comment}...{/comment}` to exclude whole regions from processing - nothing is emitted. 
+  Note that `comment` sections can't be nested. 
 
 ## Example
 
