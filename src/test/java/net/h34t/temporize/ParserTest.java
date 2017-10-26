@@ -93,4 +93,30 @@ public class ParserTest {
 
         Assert.assertEquals(9, tokens.size());
     }
+
+    @Test
+    public void testDefaultModifier() throws IOException {
+        List<Token> tokens = Parser.FULL.parse("{*$hello}");
+
+        Assert.assertEquals(1, tokens.size());
+        Assert.assertEquals(Token.Variable.class, tokens.get(0).getClass());
+
+        Token.Variable var = (Token.Variable) tokens.get(0);
+        Assert.assertEquals("hello", var.variableName);
+        Assert.assertEquals("def", var.modifiers[0]);
+    }
+
+    @Test
+    public void testDefaultModifier2() throws IOException {
+        List<Token> tokens = Parser.FULL.parse("{*$hello|boo}");
+
+        Assert.assertEquals(1, tokens.size());
+        Assert.assertEquals(Token.Variable.class, tokens.get(0).getClass());
+
+        Token.Variable var = (Token.Variable) tokens.get(0);
+        Assert.assertEquals("hello", var.variableName);
+        Assert.assertEquals("def", var.modifiers[0]);
+        Assert.assertEquals("boo", var.modifiers[1]);
+
+    }
 }
