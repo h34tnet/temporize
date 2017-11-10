@@ -51,4 +51,13 @@ public class UtilsTest {
     public void toClassName() throws Exception {
         ucFirst();
     }
+
+    @Test
+    public void lcFirst() {
+        Assert.assertEquals("foo", Utils.lcFirst("Foo"));
+        Assert.assertEquals("fOO", Utils.lcFirst("FOO"));
+        Assert.assertEquals("", Utils.lcFirst(""));
+        Assert.assertEquals("", Utils.lcFirst(null));
+        Assert.assertEquals("f", Utils.lcFirst("F"));
+    }
 }

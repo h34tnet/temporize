@@ -75,6 +75,14 @@ public class CompilerTest {
     }
 
     @Test(expected = RuntimeException.class)
+    public void checkDoubleDefinition4() throws Exception {
+        new Compiler().compile(null, "Foo", "a.b.C",
+                new ASTBuilder().build(Parser.FULL.parse("{for $Var}{/for}{$var}")), s -> {
+                });
+    }
+
+
+    @Test(expected = RuntimeException.class)
     public void checkForIncludeCollision() throws Exception {
         new Compiler().compile(null, "Foo", "a.b.C",
                 new ASTBuilder().build(Parser.FULL.parse("{for $var}{/for}{include a.b.C as $var}")), s -> {

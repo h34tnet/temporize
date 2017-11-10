@@ -81,7 +81,7 @@ public abstract class TokenCreator {
      */
     public static class Block {
 
-        final static Pattern pattern = Pattern.compile("\\{for\\s+\\$(\\w+)}");
+        final static Pattern pattern = Pattern.compile("\\{for\\s+\\$([a-z]\\w+)}");
 
         public static TokenCreator getCreator() {
             return new TokenCreator() {

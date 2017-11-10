@@ -24,12 +24,18 @@ public class Utils {
                 : input.substring(0, 1).toUpperCase() + input.substring(1);
     }
 
+    public static String lcFirst(String input) {
+        return input == null || input.length() == 0
+                ? ""
+                : input.substring(0, 1).toLowerCase() + input.substring(1);
+    }
+
     public static String toClassName(String name) {
         return ucFirst(name);
     }
 
     public static String normalizeVarName(String name) {
-        return ucFirst(name);
+        return lcFirst(name);
     }
 
 }

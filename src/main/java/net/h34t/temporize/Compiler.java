@@ -176,7 +176,7 @@ public class Compiler {
             includeHandler.accept(include.classname);
 
         // extract the variable names
-        Set<String> variableNames = variables.stream().map(e -> e.name).distinct().collect(Collectors.toSet());
+        Set<String> variableNames = variables.stream().map(e -> Utils.normalizeVarName(e.name)).distinct().collect(Collectors.toSet());
         List<String> blockNames = blocks.stream().map(e -> Utils.normalizeVarName(e.blockName)).collect(Collectors.toList());
         List<String> includeNames = includes.stream().map(e -> Utils.normalizeVarName(e.instance)).collect(Collectors.toList());
 
