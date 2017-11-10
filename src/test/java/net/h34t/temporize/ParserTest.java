@@ -4,15 +4,10 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
-import java.util.stream.Collectors;
 
-/**
- * Created by Stefan Schallerl on 25.09.2016.
- */
 public class ParserTest {
 
     static InputStream getResource(String name) {
@@ -37,8 +32,6 @@ public class ParserTest {
         List<Token> tokens = Parser.FULL.parse("<html>\n{$value}\n</html>");
         testTokens(tokens);
 
-        tokens.forEach(System.out::println);
-
         Assert.assertEquals(3, tokens.size());
 
         Assert.assertEquals(1, tokens.get(0).line);
@@ -53,7 +46,7 @@ public class ParserTest {
         Assert.assertEquals("value", ((Token.Variable) tokens.get(1)).variableName);
 
         Assert.assertEquals(Token.Literal.class, tokens.get(2).getClass());
-        Assert.assertEquals("\n</html>\n", tokens.get(2).contents);
+        Assert.assertEquals("\n</html>", tokens.get(2).contents);
     }
 
     @Test
@@ -99,7 +92,31 @@ public class ParserTest {
                 .parse(getResource("testParseConditionals.html"));
 
         Assert.assertEquals(9, tokens.size());
+    }
 
-        System.out.println(tokens.stream().map(Token::toString).collect(Collectors.joining("\n")));
+    @Test
+    public void testDefaultModifier() throws IOException {
+        List<Token> tokens = Parser.FULL.parse("{*$hello}");
+
+        Assert.assertEquals(1, tokens.size());
+        Assert.assertEquals(Token.Variable.class, tokens.get(0).getClass());
+
+        Token.Variable var = (Token.Variable) tokens.get(0);
+        Assert.assertEquals("hello", var.variableName);
+        Assert.assertEquals("def", var.modifiers[0]);
+    }
+
+    @Test
+    public void testDefaultModifier2() throws IOException {
+        List<Token> tokens = Parser.FULL.parse("{*$hello|boo}");
+
+        Assert.assertEquals(1, tokens.size());
+        Assert.assertEquals(Token.Variable.class, tokens.get(0).getClass());
+
+        Token.Variable var = (Token.Variable) tokens.get(0);
+        Assert.assertEquals("hello", var.variableName);
+        Assert.assertEquals("def", var.modifiers[0]);
+        Assert.assertEquals("boo", var.modifiers[1]);
+
     }
 }

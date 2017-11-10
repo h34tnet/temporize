@@ -13,9 +13,9 @@ public class Temporize {
         boolean verbose = false;
 
         try {
-            if (args.length < 3) {
+            if (args.length < 2) {
                 System.out.println("Usage: java -jar temporize.jar tpl/ output/ path/to/Modifiers.java");
-                System.out.println("       Compiles all templates with classname according to the pattern");
+                System.out.println("       Compiles all templates with a file name according to the pattern");
                 System.out.println("       [name].temporize.[ending] into precompiled templates and saves");
                 System.out.println("       the java source files to output.");
 
@@ -24,21 +24,14 @@ public class Temporize {
 
                 File inDirectory = new File(args[0]);
                 File outDirectory = new File(args[1]);
-                String modifier = args[2];
+                String modifier = args.length > 2 ? args[2] : null;
 
                 verbose = Arrays.stream(args).anyMatch(a -> a.equals("--verbose"));
-
 
                 if (!inDirectory.exists()) {
                     System.err.println("Couldn't find input directory " + inDirectory.getName());
                     System.exit(1);
                 }
-
-
-//            if (!modifierPath.exists() || !modifierPath.isFile()) {
-//                System.err.println("Couldn't find modifier file " + modifierPath.getName());
-//                System.exit(1);
-//            }
 
                 if ((!outDirectory.exists() && !outDirectory.mkdirs()) || !outDirectory.isDirectory()) {
                     System.err.println("Couldn't create output directory " + outDirectory.getName());
@@ -76,7 +69,7 @@ public class Temporize {
                                 }
 
                             } catch (IOException e) {
-                                e.printStackTrace();
+                                throw new RuntimeException(e);
                             }
 
                         });
@@ -93,6 +86,8 @@ public class Temporize {
 
             if (verbose)
                 e.printStackTrace();
+
+            System.exit(1);
         }
     }
 

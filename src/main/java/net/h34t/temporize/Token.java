@@ -181,11 +181,41 @@ public abstract class Token {
     }
 
     /**
+     * Skip Tokens will skip parsing until the end-skip and emit a literal.
+     */
+    public static class Skip extends Token {
+
+        public Skip(String contents, String source, int line, int offs) {
+            super(contents, source, line, offs);
+        }
+    }
+
+    /**
+     * Skip Tokens will skip parsing until the end-skip and emit a literal.
+     */
+    public static class SkipEnd extends Token {
+
+        public SkipEnd(String contents, String source, int line, int offs) {
+            super(contents, source, line, offs);
+        }
+    }
+
+    /**
      * Comment Tokens will be removed during parsing and don't anything.
      */
     public static class Comment extends Token {
 
         public Comment(String contents, String source, int line, int offs) {
+            super(contents, source, line, offs);
+        }
+    }
+
+    /**
+     * Comment Tokens will be removed during parsing and don't anything.
+     */
+    public static class CommentEnd extends Token {
+
+        public CommentEnd(String contents, String source, int line, int offs) {
             super(contents, source, line, offs);
         }
     }

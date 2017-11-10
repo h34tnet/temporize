@@ -215,13 +215,11 @@ public abstract class TokenCreator {
     /**
      * Skips are special, as they don't create a skip token, but a {@link Token.Literal}.
      * <p>
-     * TODO Skips are broken because they currently must open and close on a single line
-     * <p>
      * Note that skip sections can't be nested.
      */
     public static class Skip {
 
-        public static final Pattern PATTERN = Pattern.compile("\\{skip}(.*?)\\{/skip}");
+        public static final Pattern PATTERN = Pattern.compile("\\{skip}");
 
         public static TokenCreator getCreator() {
             return new TokenCreator() {
@@ -232,7 +230,29 @@ public abstract class TokenCreator {
 
                 @Override
                 public Token create(MatchResult matchResult, String source, int line) {
-                    return new Token.Literal(matchResult.group(1), source, line, matchResult.start());
+                    return new Token.Skip(matchResult.group(), source, line, matchResult.start());
+                }
+            };
+        }
+    }
+
+    /**
+     * Ends a skip section
+     */
+    public static class SkipEnd {
+
+        public static final Pattern PATTERN = Pattern.compile("\\{/skip}");
+
+        public static TokenCreator getCreator() {
+            return new TokenCreator() {
+                @Override
+                public Pattern getPattern() {
+                    return PATTERN;
+                }
+
+                @Override
+                public Token create(MatchResult matchResult, String source, int line) {
+                    return new Token.SkipEnd(matchResult.group(), source, line, matchResult.start());
                 }
             };
         }
@@ -241,13 +261,11 @@ public abstract class TokenCreator {
     /**
      * Comment sections are completely ignored by the parser and don't emit anything.
      * <p>
-     * TODO Comments are broken because they currently must open and close on a single line
-     * <p>
      * Note that Comment sections can't be nested.
      */
     public static class Comment {
 
-        public static final Pattern PATTERN = Pattern.compile("\\{comment}(.*?)\\{/comment}");
+        public static final Pattern PATTERN = Pattern.compile("\\{comment}");
 
         public static TokenCreator getCreator() {
             return new TokenCreator() {
@@ -258,7 +276,29 @@ public abstract class TokenCreator {
 
                 @Override
                 public Token create(MatchResult matchResult, String source, int line) {
-                    return new Token.Comment(matchResult.group(1), source, line, matchResult.start());
+                    return new Token.Comment(matchResult.group(0), source, line, matchResult.start());
+                }
+            };
+        }
+    }
+
+    /**
+     * Ends a Comment section
+     */
+    public static class CommentEnd {
+
+        public static final Pattern PATTERN = Pattern.compile("\\{/comment}");
+
+        public static TokenCreator getCreator() {
+            return new TokenCreator() {
+                @Override
+                public Pattern getPattern() {
+                    return PATTERN;
+                }
+
+                @Override
+                public Token create(MatchResult matchResult, String source, int line) {
+                    return new Token.CommentEnd(matchResult.group(0), source, line, matchResult.start());
                 }
             };
         }

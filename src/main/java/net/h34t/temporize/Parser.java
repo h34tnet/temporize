@@ -25,6 +25,19 @@ public class Parser {
 
     private final TokenCreator[] creators;
 
+    /**
+     * A skip section is active (i.e. a {skip} token has been found;
+     * all other tokens are ignored except for the skipEnd ({/skip}) and converted to literals.
+     */
+    private boolean skip;
+
+    /**
+     * A comment section is active (i.e. a {comment} token has been found;
+     * all other tokens are ignored except for the commentEnd ({/comment}) and converted to literals.
+     * While the comment section is active, no literal sections will be added.
+     */
+    private boolean comment;
+
     public Parser(TokenCreator[] creators) {
         this.creators = creators;
     }
@@ -76,8 +89,9 @@ public class Parser {
 
         try (LineNumberReader reader = new LineNumberReader(new InputStreamReader(is))) {
             String line;
-            while ((line = reader.readLine()) != null)
-                tokens.addAll(parseLine(line + "\n", source, reader.getLineNumber()));
+            while ((line = reader.readLine()) != null) {
+                tokens.addAll(parseLine(line + (reader.ready() ? "\n" : ""), source, reader.getLineNumber()));
+            }
 
             // remove comment tokens
             tokens = tokens.stream()
@@ -104,7 +118,7 @@ public class Parser {
     /**
      * The actual parsing method. Returns all tokens found in a single line.
      * <p>
-     * TODO currently the parser is broken for SKIPs and COMMENTs
+     * TODO parsing is doing a lot of unnecessary work by searching for every token and using only the first one
      *
      * @param line       the line to be parsed
      * @param source     the source identifier for debugging and error reporting purposes
@@ -119,14 +133,29 @@ public class Parser {
         while (true) {
             TokenMatchResult nextToken = null;
 
-            // find the next token
-            // note that
-            for (TokenCreator c : creators) {
+            if (skip) {
+                TokenCreator c = TokenCreator.SkipEnd.getCreator();
                 Matcher matcher = c.getPattern().matcher(line);
-
                 if (matcher.find(offs)) {
-                    if (nextToken == null || nextToken.start > matcher.start()) {
-                        nextToken = new TokenMatchResult(matcher.toMatchResult(), c, matcher.start(), matcher.end());
+                    nextToken = new TokenMatchResult(matcher.toMatchResult(), c, matcher.start(), matcher.end());
+                }
+
+            } else if (comment) {
+                TokenCreator c = TokenCreator.CommentEnd.getCreator();
+                Matcher matcher = c.getPattern().matcher(line);
+                if (matcher.find(offs)) {
+                    nextToken = new TokenMatchResult(matcher.toMatchResult(), c, matcher.start(), matcher.end());
+                }
+
+            } else {
+                // find the next token
+                for (TokenCreator c : creators) {
+                    Matcher matcher = c.getPattern().matcher(line);
+
+                    if (matcher.find(offs)) {
+                        if (nextToken == null || nextToken.start > matcher.start()) {
+                            nextToken = new TokenMatchResult(matcher.toMatchResult(), c, matcher.start(), matcher.end());
+                        }
                     }
                 }
             }
@@ -134,15 +163,38 @@ public class Parser {
             if (nextToken != null) {
                 // add a literal token from the current parsing position
                 // to the beginning of the next token
-                tokens.add(new Token.Literal(line.substring(offs, nextToken.start), source, lineNumber, offs));
-                tokens.add(nextToken.create(source, lineNumber));
+                if (!comment)
+                    tokens.add(new Token.Literal(line.substring(offs, nextToken.start), source, lineNumber, offs));
+
+                Token token = nextToken.create(source, lineNumber);
+
+                if (token instanceof Token.Skip) {
+                    skip = true;
+
+                } else if (skip && token instanceof Token.SkipEnd) {
+                    skip = false;
+
+                } else if (token instanceof Token.Comment) {
+                    comment = true;
+
+                } else if (comment && token instanceof Token.CommentEnd) {
+                    comment = false;
+
+                } else {
+                    tokens.add(token);
+                }
+
                 offs = nextToken.end;
-            } else
+
+            } else {
+                // no more tokens found on this line
                 break;
+            }
         }
 
-        // if nothing is found the remainder of the input must be a literal
-        tokens.add(new Token.Literal(line.substring(offs), source, lineNumber, offs));
+        // if no more tokens can be found the remainder of the input must be a literal
+        if (!comment)
+            tokens.add(new Token.Literal(line.substring(offs), source, lineNumber, offs));
 
         return tokens;
     }

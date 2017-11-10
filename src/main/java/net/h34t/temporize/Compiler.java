@@ -177,8 +177,8 @@ public class Compiler {
 
         // extract the variable names
         Set<String> variableNames = variables.stream().map(e -> e.name).distinct().collect(Collectors.toSet());
-        List<String> blockNames = blocks.stream().map(e -> e.blockName).collect(Collectors.toList());
-        List<String> includeNames = includes.stream().map(e -> e.instance).collect(Collectors.toList());
+        List<String> blockNames = blocks.stream().map(e -> Utils.normalizeVarName(e.blockName)).collect(Collectors.toList());
+        List<String> includeNames = includes.stream().map(e -> Utils.normalizeVarName(e.instance)).collect(Collectors.toList());
 
         List<String> conditionalValues = conditionals.stream()
                 .filter(c -> !variableNames.contains(c.name) && !blockNames.contains(c.name) && !includeNames.contains(c.name))
@@ -225,7 +225,6 @@ public class Compiler {
         StringBuilder sb = new StringBuilder();
         if (packageName != null) {
             sb.append("package ").append(packageName).append(";\n\n");
-            sb.append("import java.io.Writer;\n\n");
             if (blocks.size() > 0) {
                 sb.append("import java.util.List;\n");
                 sb.append("import java.util.ArrayList;\n\n");
@@ -289,23 +288,20 @@ public class Compiler {
         for (String elem : conditionalValues)
             sb.append(Ident.of(ident)).append(createSetter(className, "boolean", elem, ident)).append("\n\n");
 
-
         // output body
         sb.append(Ident.of(ident)).append("    @Override\n");
         sb.append(Ident.of(ident)).append("    public String toString() {\n");
-        sb.append(Ident.of(ident)).append("        StringBuilder sb = new StringBuilder();\n");
-
-        sb.append(createStringOutput(root,
-                s -> "sb.append(" + s + ")",
-                s -> "sb.append(" + s + ".toString())",
-                ident + 2));
-
-        sb.append(Ident.of(ident)).append("\n");
-        sb.append(Ident.of(ident)).append("        return sb.toString();\n");
+        sb.append(Ident.of(ident)).append("        try {\n");
+        sb.append(Ident.of(ident)).append("            java.io.Writer w = new java.io.StringWriter();\n");
+        sb.append(Ident.of(ident)).append("            write(w);\n");
+        sb.append(Ident.of(ident)).append("            return w.toString();\n");
+        sb.append(Ident.of(ident)).append("        } catch (java.io.IOException e) {\n");
+        sb.append(Ident.of(ident)).append("            throw new RuntimeException(e);\n");
+        sb.append(Ident.of(ident)).append("        }\n");
         sb.append(Ident.of(ident)).append("    }\n\n");
 
         // output body
-        sb.append(Ident.of(ident)).append("    public void write(Writer w) throws java.io.IOException {\n");
+        sb.append(Ident.of(ident)).append("    public void write(java.io.Writer w) throws java.io.IOException {\n");
         sb.append(createStringOutput(root,
                 s -> "w.write(" + s + ")",
                 s -> s + ".write(w)",
