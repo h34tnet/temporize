@@ -164,21 +164,21 @@ or, even faster:
 ## Benchmark
 
 * It's fast. On my computer, the https://github.com/mbosecke/template-benchmark's 
-  fastest engine is Rocker, with 49.072 ops/s. Temporize gets 76.054 ops/s.  
+  fastest engine is Rocker, with 49.738 ops/s. Temporize gets 77.176 ops/s.  
 
-  
+# Run complete. Total time: 00:12:43
+
     Benchmark                     Mode  Cnt      Score      Error  Units
-    Freemarker.benchmark         thrpt   50  20428,242 ±  129,919  ops/s
-    Handlebars.benchmark         thrpt   50  23626,078 ±  237,292  ops/s
-    Mustache.benchmark           thrpt   50  26602,105 ±  221,318  ops/s
-    Pebble.benchmark             thrpt   50  43328,502 ±  375,950  ops/s
-    Rocker.benchmark             thrpt   50  49072,283 ±  499,747  ops/s
-    TemporizeToString.benchmark  thrpt   50  53945,231 ±  309,228  ops/s
-    TemporizeWriter.benchmark    thrpt   50  76054,989 ± 1351,153  ops/s
-    Thymeleaf.benchmark          thrpt   50   1888,219 ±   28,010  ops/s
-    Trimou.benchmark             thrpt   50  28877,322 ±  258,909  ops/s
-    Velocity.benchmark           thrpt   50  25800,604 ±  230,428  ops/s
-
+    Freemarker.benchmark         thrpt   50  20358,267 ±   97,149  ops/s
+    Handlebars.benchmark         thrpt   50  23952,848 ±  177,972  ops/s
+    Mustache.benchmark           thrpt   50  26739,677 ±  156,825  ops/s
+    Pebble.benchmark             thrpt   50  41518,287 ± 1602,898  ops/s
+    Rocker.benchmark             thrpt   50  49738,370 ±  410,952  ops/s
+    TemporizeToString.benchmark  thrpt   50  77176,539 ±  791,690  ops/s
+    TemporizeWriter.benchmark    thrpt   50  76905,692 ±  311,332  ops/s
+    Thymeleaf.benchmark          thrpt   50   1912,023 ±   24,712  ops/s
+    Trimou.benchmark             thrpt   50  28922,202 ±  185,427  ops/s
+    Velocity.benchmark           thrpt   50  25620,993 ±  457,921  ops/s
 
 ## How to use
 
