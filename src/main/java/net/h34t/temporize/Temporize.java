@@ -1,8 +1,11 @@
 package net.h34t.temporize;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -37,6 +40,25 @@ public class Temporize {
                     System.err.println("Couldn't create output directory " + outDirectory.getName());
                     System.exit(1);
                 }
+
+                File temporizeDirectory = new File(outDirectory, "temporize");
+                if (!temporizeDirectory.exists()) {
+                    if (!temporizeDirectory.mkdir())
+                        throw new IOException("Can't create temporize interface directory");
+                }
+
+                // copy the TemporizeTemplate file from the packaged resources into the output directory
+                File temporizeInterface = new File(temporizeDirectory, "TemporizeTemplate.java");
+
+                try (InputStream is = Temporize.class.getClassLoader().getResourceAsStream("TemporizeTemplate.java");
+                     OutputStream os = new FileOutputStream(temporizeInterface)) {
+                    byte[] buffer = new byte[1024];
+                    int bytesRead;
+                    while ((bytesRead = is.read(buffer)) != -1) {
+                        os.write(buffer, 0, bytesRead);
+                    }
+                }
+
 
                 List<File> templates = findFilesRecursively(inDirectory);
 

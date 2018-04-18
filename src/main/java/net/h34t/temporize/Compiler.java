@@ -225,7 +225,7 @@ public class Compiler {
         StringBuilder sb = new StringBuilder();
         if (packageName != null) {
             sb.append("package ").append(packageName).append(";\n\n");
-            if (blocks.size() > 0) {
+            if (!blocks.isEmpty()) {
                 sb.append("import java.util.List;\n");
                 sb.append("import java.util.ArrayList;\n\n");
             }
@@ -233,7 +233,7 @@ public class Compiler {
                 sb.append("import static ").append(modifier).append(".*;\n\n");
         }
 
-        sb.append(Ident.of(ident)).append("public ").append(packageName != null ? "" : "static ").append("class ").append(className).append(" {\n\n");
+        sb.append(Ident.of(ident)).append("public ").append(packageName != null ? "" : "static ").append("class ").append(className).append(" implements temporize.TemporizeTemplate {\n\n");
 
         // variable property definitions
         for (String var : variableNames)
@@ -301,6 +301,7 @@ public class Compiler {
         sb.append(Ident.of(ident)).append("    }\n\n");
 
         // output body
+        sb.append(Ident.of(ident)).append("    @Override\n");
         sb.append(Ident.of(ident)).append("    public void write(java.io.Writer w) throws java.io.IOException {\n");
         sb.append(createStringOutput(root,
                 s -> "w.write(" + s + ")",
