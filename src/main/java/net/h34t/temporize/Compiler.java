@@ -50,6 +50,13 @@ public class Compiler {
                 Ident.of(ident) + "    }";
     }
 
+    static String createTemplateSetter(String className, String instanceName, int ident) {
+        return Ident.of(ident) + "    public " + className + " set" + Utils.toClassName(instanceName) + "(temporize.TemporizeTemplate " + instanceName + ") {\n" +
+                Ident.of(ident) + "        this." + instanceName + " = " + instanceName + ".toString();\n" +
+                Ident.of(ident) + "        return this;\n" +
+                Ident.of(ident) + "    }";
+    }
+
     static List<ASTNode> getNodesInContext(ASTNode current) {
         List<ASTNode> nodes = new ArrayList<>();
 
@@ -260,7 +267,7 @@ public class Compiler {
 
 
         // full constructor
-        if (constructorInitializers.size() > 0) {
+        if (!constructorInitializers.isEmpty()) {
             sb.append(Ident.of(ident)).append("    public ").append(className).append("(");
             sb.append(constructorInitializers.stream()
                     .collect(Collectors.joining(", ")))
@@ -273,8 +280,10 @@ public class Compiler {
         }
 
         // variable setters
-        for (String var : variableNames)
+        for (String var : variableNames) {
             sb.append(createSetter(className, "String", var, ident)).append("\n\n");
+            sb.append(createTemplateSetter(className, var, ident)).append("\n\n");
+        }
 
         // block setters
         for (ASTNode.Block block : blocks)
