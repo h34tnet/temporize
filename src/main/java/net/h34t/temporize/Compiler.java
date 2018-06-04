@@ -48,6 +48,14 @@ public class Compiler {
                 Ident.of(ident) + "        this." + instanceName + " = " + instanceName + ";\n" +
                 Ident.of(ident) + "        return this;\n" +
                 Ident.of(ident) + "    }";
+
+    }
+
+    static String createStringValueSetter(String className, String type, String instanceName, int ident) {
+        return Ident.of(ident) + "    public " + className + " set" + Utils.toClassName(instanceName) + "(" + type + " " + instanceName + ") {\n" +
+                Ident.of(ident) + "        this." + instanceName + " = String.valueOf(" + instanceName + ");\n" +
+                Ident.of(ident) + "        return this;\n" +
+                Ident.of(ident) + "    }";
     }
 
     static String createTemplateSetter(String className, String instanceName, int ident) {
@@ -282,6 +290,7 @@ public class Compiler {
         // variable setters
         for (String var : variableNames) {
             sb.append(createSetter(className, "String", var, ident)).append("\n\n");
+            sb.append(createStringValueSetter(className, "long", var, ident)).append("\n\n");
             sb.append(createTemplateSetter(className, var, ident)).append("\n\n");
         }
 
