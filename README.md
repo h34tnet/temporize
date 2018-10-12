@@ -205,6 +205,24 @@ files with a `.temporize.` in the name are processed.
 
  `java -jar temporize.jar tpl/ src_gen/ package.name.of.Modifiers`
  
+ 
+#### jitpack
+
+[![](https://jitpack.io/v/h34tnet/temporize.svg)](https://jitpack.io/#h34tnet/temporize)
+
+    <repositories>
+		<repository>
+		    <id>jitpack.io</id>
+		    <url>https://jitpack.io</url>
+		</repository>
+	</repositories> 
+ 
+     <dependency>
+ 	    <groupId>com.github.h34tnet</groupId>
+ 	    <artifactId>temporize</artifactId>
+ 	    <version>master-SNAPSHOT</version>
+ 	</dependency>
+ 
 ### maven plugin
 
 Add temporize as a plugin to your project; the `<execution>` adds it to your `compile` target.  
