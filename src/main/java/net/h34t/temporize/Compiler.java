@@ -1,8 +1,11 @@
 package net.h34t.temporize;
 
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.text.translate.CharSequenceTranslator;
+import org.apache.commons.text.translate.EntityArrays;
+import org.apache.commons.text.translate.LookupTranslator;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -10,6 +13,19 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class Compiler {
+
+    public static final CharSequenceTranslator ESCAPE_JAVA =
+            new LookupTranslator(
+                    new HashMap<CharSequence, CharSequence>() {{
+                        put("\"", "\\\"");
+                        put("\\", "\\\\");
+                    }}
+            ).with(new LookupTranslator(EntityArrays.JAVA_CTRL_CHARS_ESCAPE));
+
+
+    // .with(
+    // new LookupTranslator(EntityArrays.JAVA_CTRL_CHARS_ESCAPE()))
+
 
     public Compiler() {
     }
@@ -116,7 +132,7 @@ public class Compiler {
 
         } else if (node instanceof ASTNode.ConstantValue) {
             return Ident.of(indent)
-                    + fnOutput.apply("\"" + StringEscapeUtils.escapeJava(((ASTNode.ConstantValue) node).value) + "\"") + ";\n"
+                    + fnOutput.apply("\"" + ESCAPE_JAVA.translate(((ASTNode.ConstantValue) node).value) + "\"") + ";\n"
                     + createStringOutput(node.next(), fnOutput, fnInclude, indent);
 
         } else if (node instanceof ASTNode.Variable) {
