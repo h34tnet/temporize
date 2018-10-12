@@ -1,3 +1,5 @@
+target/
+dependency-reduced-pom.xml
 
 # Created by https://www.gitignore.io/api/java,gradle,intellij,intellij+all
 

@@ -73,7 +73,7 @@ public class Temporize {
                                 String packageName = tf.getPackageName();
                                 String className = tf.getClassName();
 
-                                System.out.println("Package: " + packageName + " / Class: " + className);
+                                System.out.printf("Class: %s.%s%n", packageName, className);
 
                                 List<Token> tokens = Parser.FULL.parse(t);
                                 ASTNode root = new ASTBuilder().build(tokens);

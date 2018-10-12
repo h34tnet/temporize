@@ -1,6 +1,8 @@
 package net.h34t.temporize;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.regex.Pattern;
 
 /**
@@ -34,10 +36,16 @@ public class TemplateFile {
      * @return the package name depending on the directory structure.
      */
     public String getPackageName() {
-        return templateFile.getParentFile().getPath()
-                .substring(templateDirectory.getPath().length() + 1)
-                .replaceAll(PATH_SEPARATOR_REGEXP, ".");
+        String directoryPath = templateFile.getParentFile().getPath();
+        Path baseDirectory = Paths.get(directoryPath);
+        Path tplDirectory = Paths.get(templateDirectory.getPath());
 
+        if (baseDirectory.equals(tplDirectory)) {
+            throw new RuntimeException("Please move " + templateFile.getName() + " into a subdirectory. This is needed to generate a package name.");
+        }
+
+        return directoryPath.substring(templateDirectory.getPath().length() + 1)
+                .replaceAll(PATH_SEPARATOR_REGEXP, ".");
     }
 
     /**
@@ -57,7 +65,9 @@ public class TemplateFile {
      * @return a File representing the directory where to store the java file
      */
     public File getOutputDirectory(File outputBase) {
-        return new File(outputBase, getPackageName().replaceAll("\\.", "/"));
+        return getPackageName() == null
+                ? outputBase
+                : new File(outputBase, getPackageName().replaceAll("\\.", "/"));
     }
 
     /**
