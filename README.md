@@ -182,6 +182,14 @@ or, even faster:
 
 ## How to use
 
+### Build
+
+temporize (now) is a maven plugin.
+
+You can build it by executing:
+
+    mvn clean install 
+
 ### Converting manually
 
 Convert the raw templates into classes on execution. Per default only 
@@ -196,22 +204,33 @@ files with a `.temporize.` in the name are processed.
 #### Example
 
  `java -jar temporize.jar tpl/ src_gen/ package.name.of.Modifiers`
+ 
+### maven plugin
 
-### gradle pre-build
+Add temporize as a plugin to your project; the `<execution>` adds it to your `compile` target.  
 
-    task temporize() << {
-        javaexec {
-            main = "-jar"
-            args = [
-                    "temporize.jar",
-                    "tpl",
-                    "src/main/tpl",
-                    "package.name.of.Modifiers"
-            ]
-        }
-    }
-     
-    build.dependsOn temporize
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>net.h34t</groupId>
+                <artifactId>temporize</artifactId>
+                <version>1.0-SNAPSHOT</version>
+                <configuration>
+                    <inputPath>${project.basedir}/tpl</inputPath>
+                    <outputPath>${project.basedir}/src/main/java</outputPath>
+                    <modifier>your.package.Modifiers</modifier>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>temporize</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
 Don't forget to substitute for your actual paths.
 
@@ -219,10 +238,10 @@ Don't forget to substitute for your actual paths.
 
 * Stricter line ending handling. Currently only linux `\n` are generated, `\r`s are lost. 
 * sanity checks for invalid variable and method names defined in templates
-* have a go at continuous template builds via gradle: https://docs.gradle.org/current/userguide/continuous_build.html
-  or java: https://docs.oracle.com/javase/tutorial/essential/io/notification.html
-* Implement multi line `skip` and `comment`.
+* Implement multi line `skip` and `comment` (done)
 * Add file existence check for `include`s. 
+* Add stricter handling of file encodings.
+* Publish on maven central.
 
 ## License
 
