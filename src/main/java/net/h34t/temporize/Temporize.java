@@ -59,7 +59,6 @@ public class Temporize {
                     }
                 }
 
-
                 List<File> templates = findFilesRecursively(inDirectory);
 
                 templates
@@ -99,9 +98,7 @@ public class Temporize {
                 long et = System.nanoTime();
 
                 System.out.println("Done. Took " + (et - st) / 1000000 + "ms");
-
             }
-
 
         } catch (Exception e) {
             System.err.println("An error occurred: " + e.getMessage());

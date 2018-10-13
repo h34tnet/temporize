@@ -1,15 +1,16 @@
 # Temporize
 
-Temporize is a template engine for java that statically compiles templates into java source files, which can then be 
-used from your code without the original template files.
+Temporize is a template engine for java that statically compiles templates into java source files, which then can then 
+be used from your code without the original template files.
 
-Compared to other engines Temporize is not necessarily designed to separate programmers from page designers as the 
-project needs to be recompiled after changes in the templates.  
+Compared to other engines Temporize is not necessarily designed to separate programmers from designers as the 
+project needs to be recompiled after changes in the templates.
 
 ## Why + advantages
 
-* Speed - it's ~30%-50% faster than Rocker at the https://github.com/mbosecke/template-benchmark Stock benchmark
-* No file IO during runtime (i.e. no blocking, IO is done only during the compilation step) (except for the JVMs 
+* Speed - it's one of the - if not the - fastest engine in the https://github.com/mbosecke/template-benchmark Stock 
+  benchmark. It's fast because the templates itself are compiled by the JVM. 
+* No file IO during runtime (i.e. no blocking, IO is done only during the compilation step - except for the JVMs 
   startup itself)
 * IDE auto-completion support for all IDEs without any extra plug-ins
 * Packaging and distributing the compiled templates is easy. There is no need to package the original template sources.
@@ -74,6 +75,8 @@ This creates a class `src/main/tpl-gen/index/MyTemplate.java`.
 The generated code might look something like this:
 
     package index; 
+    
+    import static my.Modifiers.*;
     
     class MyTemplate {
         private String title = "";
@@ -161,6 +164,24 @@ or, even faster:
         
      System.out.print(writer.toString());
 
+You still have to provide a `my.Modifiers` class with the used String -> String 
+methods - in the example `html`, `stripnl` and `ellipsize80`.
+
+e.g.
+
+    package my;
+    
+    public class Modifiers {
+    
+        (...)
+    
+        public static String ellipsize80(String in) {
+            return in.length() < 80 ? in : in.substring(0, 76) + " ...";
+        }
+    }
+
+Modifiers can't take arguments yet. 
+
 ## Benchmark
 
 * It's fast. On my computer, the [github.com/mbosecke/template-benchmark)](https://github.com/mbosecke/template-benchmark)'s 
@@ -182,11 +203,10 @@ or, even faster:
 
 ## How to use
 
-### Build
+### Build locally
 
-temporize (now) is a maven plugin.
-
-You can build it by executing:
+Temporize is now a maven plugin. Check it out from github and built it by 
+executing:
 
     mvn clean install 
 
@@ -236,7 +256,7 @@ Add temporize as a plugin to your project; the `<execution>` adds it to your `co
                 <configuration>
                     <inputPath>${project.basedir}/tpl</inputPath>
                     <outputPath>${project.basedir}/src/main/java</outputPath>
-                    <modifier>your.package.Modifiers</modifier>
+                    <modifier>my.project.foobar.Modifiers</modifier>
                 </configuration>
                 <executions>
                     <execution>
@@ -250,16 +270,20 @@ Add temporize as a plugin to your project; the `<execution>` adds it to your `co
         </plugins>
     </build>
 
-Don't forget to substitute for your actual paths.
+Don't forget to substitute for your actual paths and packages.
 
 ## Known bugs and TODOs
 
 * Stricter line ending handling. Currently only linux `\n` are generated, `\r`s are lost. 
-* sanity checks for invalid variable and method names defined in templates
-* Implement multi line `skip` and `comment` (done)
+* Sanity checks for invalid variable and method names defined in templates.
 * Add file existence check for `include`s. 
 * Add stricter handling of file encodings.
-* Publish on maven central.
+* Clean up leftover java files from removed/renamed templates.
+* Add option for debug output (--verbose) to the mojo plugin.
+* Modifier arguments?
+
+* Publish on ~~maven central and/or~~ jitpack (done)
+* Implement multi line `skip` and `comment` (done)
 
 ## License
 
