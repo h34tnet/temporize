@@ -163,7 +163,7 @@ or, even faster:
 
 ## Benchmark
 
-* It's fast. On my computer, the https://github.com/mbosecke/template-benchmark's 
+* It's fast. On my computer, the [github.com/mbosecke/template-benchmark)](https://github.com/mbosecke/template-benchmark)'s 
   fastest engine is Rocker, with 49.738 ops/s. Temporize gets 77.176 ops/s.  
 
 # Run complete. Total time: 00:12:43
