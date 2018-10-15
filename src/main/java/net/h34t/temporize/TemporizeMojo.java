@@ -7,7 +7,7 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
-@Mojo(name = "temporize", defaultPhase = LifecyclePhase.COMPILE)
+@Mojo(name = "temporize", defaultPhase = LifecyclePhase.GENERATE_SOURCES)
 public class TemporizeMojo extends AbstractMojo {
 
     @Parameter(property = "temporize.inputpath", required = true)

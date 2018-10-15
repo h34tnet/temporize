@@ -138,7 +138,7 @@ public class Compiler {
         } else if (node instanceof ASTNode.Variable) {
             StringBuilder variable = new StringBuilder("this." + ((ASTNode.Variable) node).name);
             for (String modifier : ((ASTNode.Variable) node).modifiers)
-                variable = new StringBuilder(modifier + "(" + variable + ")");
+                variable = new StringBuilder("TemporizeTemplate." + modifier + "(" + variable + ")");
 
             return Ident.of(indent) + fnOutput.apply(variable.toString()) + ";\n"
                     + createStringOutput(node.next(), fnOutput, fnInclude, indent);
@@ -189,12 +189,12 @@ public class Compiler {
         }
     }
 
-    public Template compile(String packageName, String className, String modifier, ASTNode root, Consumer<String> includeHandler) {
-        return compile(packageName, className, modifier, root, 0, includeHandler);
+    public Template compile(String packageName, String className, ASTNode root, Consumer<String> includeHandler) {
+        return compile(packageName, className, root, 0, includeHandler);
     }
 
 
-    Template compile(String packageName, String className, String modifier, ASTNode root, int ident, Consumer<String> includeHandler) {
+    Template compile(String packageName, String className, ASTNode root, int ident, Consumer<String> includeHandler) {
         // variables, blocks and includes are all defining values
         List<ASTNode.Variable> variables = getNodesOf(root, ASTNode.Variable.class);
         List<ASTNode.Block> blocks = getNodesOf(root, ASTNode.Block.class);
@@ -260,8 +260,6 @@ public class Compiler {
                 sb.append("import java.util.List;\n");
                 sb.append("import java.util.ArrayList;\n\n");
             }
-            if (modifier != null)
-                sb.append("import static ").append(modifier).append(".*;\n\n");
         }
 
         sb.append(Ident.of(ident)).append("public ").append(packageName != null ? "" : "static ").append("class ").append(className).append(" implements temporize.TemporizeTemplate {\n\n");
@@ -345,7 +343,7 @@ public class Compiler {
 
 
         for (ASTNode.Block block : blocks) {
-            sb.append("\n").append(compile(null, block.blockClassName, modifier, block.branch, ident + 1, includeHandler));
+            sb.append("\n").append(compile(null, block.blockClassName, block.branch, ident + 1, includeHandler));
         }
 
         sb.append(Ident.of(ident)).append("}\n");

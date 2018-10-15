@@ -54,29 +54,30 @@ public class CompilerTest {
 
     @Test
     public void compileValid() throws Exception {
-        new Compiler().compile(null, "Foo", "a.b.C",
-                new ASTBuilder().build(Parser.FULL.parse("{$var}{for $forloop}{/for}[include a.b.C as $bar}")), s -> {
+        new Compiler().compile(null, "Foo",
+                new ASTBuilder().build(
+                        Parser.FULL.parse("{$var}{for $forloop}{/for}[include a.b.C as $bar}")), s -> {
                 });
     }
 
 
     @Test(expected = RuntimeException.class)
     public void checkDoubleDefinition() throws Exception {
-        new Compiler().compile(null, "Foo", "a.b.C",
+        new Compiler().compile(null, "Foo",
                 new ASTBuilder().build(Parser.FULL.parse("{$var}{for $var}{/for}")), s -> {
                 });
     }
 
     @Test(expected = RuntimeException.class)
     public void checkDoubleDefinition2() throws Exception {
-        new Compiler().compile(null, "Foo", "a.b.C",
+        new Compiler().compile(null, "Foo",
                 new ASTBuilder().build(Parser.FULL.parse("{for $var}{/for}{$var}")), s -> {
                 });
     }
 
     @Test(expected = RuntimeException.class)
     public void checkDoubleDefinition4() throws Exception {
-        new Compiler().compile(null, "Foo", "a.b.C",
+        new Compiler().compile(null, "Foo",
                 new ASTBuilder().build(Parser.FULL.parse("{for $Var}{/for}{$var}")), s -> {
                 });
     }
@@ -84,30 +85,32 @@ public class CompilerTest {
 
     @Test(expected = RuntimeException.class)
     public void checkForIncludeCollision() throws Exception {
-        new Compiler().compile(null, "Foo", "a.b.C",
+        new Compiler().compile(null, "Foo",
                 new ASTBuilder().build(Parser.FULL.parse("{for $var}{/for}{include a.b.C as $var}")), s -> {
                 });
     }
 
     @Test(expected = RuntimeException.class)
     public void checkIncludeForCollision() throws Exception {
-        new Compiler().compile(null, "Foo", "a.b.C",
+        new Compiler().compile(null, "Foo",
                 new ASTBuilder().build(Parser.FULL.parse("{include a.b.C as $var}{for $var}{/for}")), s -> {
                 });
     }
 
     @Test(expected = RuntimeException.class)
     public void checkDoubleDefinition5() throws Exception {
-        new Compiler().compile(null, "Foo", "a.b.C",
-                new ASTBuilder().build(Parser.FULL.parse("{include a.b.C as $var}{include c.d.E as $var}")), s -> {
+        new Compiler().compile(null, "Foo",
+                new ASTBuilder().build(
+                        Parser.FULL.parse("{include a.b.C as $var}{include c.d.E as $var}")), s -> {
                 });
     }
 
 
     @Test
     public void checkCompilation() throws IOException {
-        Template tpl = new Compiler().compile("net.h34t", "TestClass", null,
-                new ASTBuilder().build(Parser.FULL.parse("{if $foo}{$foo}{for $bar}{$baz}{/for}{else}nothing{/if}")), s -> {
+        Template tpl = new Compiler().compile("net.h34t", "TestClass",
+                new ASTBuilder().build(
+                        Parser.FULL.parse("{if $foo}{$foo}{for $bar}{$baz}{/for}{else}nothing{/if}")), s -> {
                 });
 
         Assert.assertEquals("TestClass", tpl.className);
@@ -118,7 +121,7 @@ public class CompilerTest {
 
     @Test
     public void compileConditionalBooleans() throws IOException {
-        Template tpl = new Compiler().compile("net.h34t", "TestClass", null,
+        Template tpl = new Compiler().compile("net.h34t", "TestClass",
                 new ASTBuilder().build(Parser.FULL.parse("{if $foo}foo{/if}")), s -> {
                 });
 
@@ -130,7 +133,7 @@ public class CompilerTest {
 
     @Test
     public void compileEmptyConditional() throws IOException {
-        Template tpl = new Compiler().compile("net.h34t", "TestClass", null,
+        Template tpl = new Compiler().compile("net.h34t", "TestClass",
                 new ASTBuilder().build(Parser.FULL.parse("{if $foo}{else}{/if}{$bar}")), s -> {
                 });
 
@@ -142,18 +145,20 @@ public class CompilerTest {
 
     @Test(expected = RuntimeException.class)
     public void compileEvilTwinBlockAssignments() throws IOException {
-        new Compiler().compile("foo", "Bar", null, new ASTBuilder().build(
-                Parser.FULL.parse("{for $foo}bar{/for}{for $Foo}bar{/for}")
-        ), s -> {
-        });
+        new Compiler().compile("foo", "Bar",
+                new ASTBuilder().build(
+                        Parser.FULL.parse("{for $foo}bar{/for}{for $Foo}bar{/for}")
+                ), s -> {
+                });
     }
 
     @Test(expected = RuntimeException.class)
     public void compileEvilTwinIncludeAssignments() throws IOException {
-        new Compiler().compile("foo", "Bar", null, new ASTBuilder().build(
-                Parser.FULL.parse("{include a.b.C as $bar}{include a.b.C as $Bar}")
-        ), s -> {
-        });
+        new Compiler().compile("foo", "Bar",
+                new ASTBuilder().build(
+                        Parser.FULL.parse("{include a.b.C as $bar}{include a.b.C as $Bar}")
+                ), s -> {
+                });
     }
 
 }

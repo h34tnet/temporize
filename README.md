@@ -48,23 +48,25 @@ project needs to be recompiled after changes in the templates.
 
 Template `tpl/index/MyTemplate.temporize.html`:
 
-    <html>
-    <head>
-      <title>{$title|html}</title>
-    </head>
-    <body>
-      <h1>{$headline|stripnl|html}</h1>
-      {if $showIntroduction}<div>{$introduction|html}</div>{/if}
-      {if $point} 
-      <ul>
-      {for $point}<li><a href="/{$target|urlenc}">{$text|ellipsize80|html}</a></li>{/for}
-      </ul>
-      {else}
-      <p>No points</p>
-      {/if}
-      {include inc.Footer as $footer}
-    </body>
-    </html>
+```html
+<html>
+<head>
+  <title>{$title|html}</title>
+</head>
+<body>
+  <h1>{$headline|stripnl|html}</h1>
+  {if $showIntroduction}<div>{$introduction|html}</div>{/if}
+  {if $point} 
+  <ul>
+  {for $point}<li><a href="/{$target|urlenc}">{$text|ellipsize80|html}</a></li>{/for}
+  </ul>
+  {else}
+  <p>No points</p>
+  {/if}
+  {include inc.Footer as $footer}
+</body>
+</html>
+```
     
 Compile this to the target src-gen directory by invoking
  
@@ -74,111 +76,107 @@ This creates a class `src/main/tpl-gen/index/MyTemplate.java`.
 
 The generated code might look something like this:
 
-    package index; 
+```java
+package index; 
+
+import static my.Modifiers.*;
+
+class MyTemplate {
+    private String title = "";
+    private String headline = "";
+    private boolean showIntroduction;
+    private String introduction = "";
+    private List<Point> pointList = new ArrayList<>();
+    private inc.Footer footer; 
     
-    import static my.Modifiers.*;
+    public MyTemplate() {}
+    public MyTemplate(String title, ...) {this.title = title; ...}
     
-    class MyTemplate {
-        private String title = "";
-        private String headline = "";
-        private boolean showIntroduction;
-        private String introduction = "";
-        private List<Point> pointList = new ArrayList<>();
-        private inc.Footer footer; 
-        
-        public MyTemplate() {}
-        public MyTemplate(String title, ...) {this.title = title; ...}
-        
-        public MyTemplate setTitle(String title) {this.title = title;}
-        ...
-        public MyTemplate setShowIntroduction(boolean showIntroduction) {...}
-        public MyTemplate setPointList(List<Point> pointList) {...}
-        public MyTemplate setFooter(inc.Footer footer) {...}
-        ...
-        public MyTemplate write(Writer writer) { 
-            /* same as toString() below, just with a writer instead of a 
-               StringBuilder. */
-        }
-        ...
-        @Override
-        public String toString() {
-            StringBuilder sb = new StringBuilder()
-            sb.append("<html>\n    <head>\n      <title>");
-            sb.append(html(ellipsize80(this.headline)));
-            sb.append("</title>\n    </head>");
-            ...
-            if (this.showIntroduction) {
-                sb.append("<div>");
-                sb.append(html(this.introduction));
-                sb.append("</div>");
-            }
-            ...
-            sb.toString();
-        }
-        
-        public static class Point {
-        
-            private String target = "";
-            private String text = "";
-            
-            public Point() {}
-            
-            public Point(String target, String text) { 
-                this.target = target;
-                this.text = text; 
-            }
-            
-            public Point setTarget(String target) {...}
-            ...
-        }
+    public MyTemplate setTitle(String title) {this.title = title;}
+    ...
+    public MyTemplate setShowIntroduction(boolean showIntroduction) {...}
+    public MyTemplate setPointList(List<Point> pointList) {...}
+    public MyTemplate setFooter(inc.Footer footer) {...}
+    ...
+    public MyTemplate write(Writer writer) { 
+        /* same as toString() below, just with a writer instead of a 
+           StringBuilder. */
     }
+    ...
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder()
+        sb.append("<html>\n    <head>\n      <title>");
+        sb.append(html(ellipsize80(this.headline)));
+        sb.append("</title>\n    </head>");
+        ...
+        if (this.showIntroduction) {
+            sb.append("<div>");
+            sb.append(html(this.introduction));
+            sb.append("</div>");
+        }
+        ...
+        sb.toString();
+    }
+    
+    public static class Point {
+    
+        private String target = "";
+        private String text = "";
+        
+        public Point() {}
+        
+        public Point(String target, String text) { 
+            this.target = target;
+            this.text = text; 
+        }
+        
+        public Point setTarget(String target) {...}
+        ...
+    }
+}
+```
 
 The methods toString or write are used to execute the template and get the result. So
 in your code you could do:
 
-    List<Points> points = Arrays.asList(
-        new Point().setTarget("/news").setText("News"),
-        /* or alternatively */
-        new Point("/arch", "Archives"));
+```java
+List<Points> points = Arrays.asList(
+    new Point().setTarget("/news").setText("News"),
+    /* or alternatively */
+    new Point("/arch", "Archives"));
 
-    System.out.print(new MyTemplate()
-        .setTitle("hello world")
-        .setHeadline("welcome, stranger")
-        .showIntroduction(true)
-        .setIntroduction("stay a while and listen!")
-        .setPointList(points)
-        .setFooter(new Footer().setCopyright("2017"));
+System.out.print(new MyTemplate()
+    .setTitle("hello world")
+    .setHeadline("welcome, stranger")
+    .showIntroduction(true)
+    .setIntroduction("stay a while and listen!")
+    .setPointList(points)
+    .setFooter(new Footer().setCopyright(2017 ))
+    .toString());
+```
 
-or, even faster: 
+or, for example
 
-    Writer writer = new StringWriter();
 
-    new MyTemplate()
-        .setTitle("hello world")
-        .setHeadline("welcome, stranger")
-        .showIntroduction(true)
-        .setIntroduction("stay a while and listen!")
-        .setPointList(points)
-        .setFooter(new Footer().setCopyright("2017"))
-        .write(writer);
-        
-     System.out.print(writer.toString());
 
 You still have to provide a `my.Modifiers` class with the used String -> String 
 methods - in the example `html`, `stripnl` and `ellipsize80`.
 
 e.g.
 
-    package my;
-    
-    public class Modifiers {
-    
-        (...)
-    
-        public static String ellipsize80(String in) {
-            return in.length() < 80 ? in : in.substring(0, 76) + " ...";
-        }
+```java
+package my;
+
+public class Modifiers {
+
+    (...)
+
+    public static String ellipsize80(String in) {
+        return in.length() < 80 ? in : in.substring(0, 76) + " ...";
     }
+}
+```
 
 Modifiers can't take arguments yet. 
 
@@ -230,6 +228,7 @@ files with a `.temporize.` in the name are processed.
 
 [![](https://jitpack.io/v/h34tnet/temporize.svg)](https://jitpack.io/#h34tnet/temporize)
 
+```xml
     <repositories>
 		<repository>
 		    <id>jitpack.io</id>
@@ -242,33 +241,35 @@ files with a `.temporize.` in the name are processed.
  	    <artifactId>temporize</artifactId>
  	    <version>master-SNAPSHOT</version>
  	</dependency>
- 
+```
 ### maven plugin
 
 Add temporize as a plugin to your project; the `<execution>` adds it to your `compile` target.  
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>net.h34t</groupId>
-                <artifactId>temporize</artifactId>
-                <version>1.0-SNAPSHOT</version>
-                <configuration>
-                    <inputPath>${project.basedir}/tpl</inputPath>
-                    <outputPath>${project.basedir}/src/main/java</outputPath>
-                    <modifier>my.project.foobar.Modifiers</modifier>
-                </configuration>
-                <executions>
-                    <execution>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>temporize</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
+```xml
+<build>
+    <plugins>
+        <plugin>
+            <groupId>net.h34t</groupId>
+            <artifactId>temporize</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <configuration>
+                <inputPath>${project.basedir}/tpl</inputPath>
+                <outputPath>${project.basedir}/src/main/java</outputPath>
+                <modifier>my.project.foobar.Modifiers</modifier>
+            </configuration>
+            <executions>
+                <execution>
+                    <phase>compile</phase>
+                    <goals>
+                        <goal>temporize</goal>
+                    </goals>
+                </execution>
+            </executions>
+        </plugin>
+    </plugins>
+</build>
+```
 
 Don't forget to substitute for your actual paths and packages.
 
