@@ -228,47 +228,64 @@ files with a `.temporize.` in the name are processed.
 
 [![](https://jitpack.io/v/h34tnet/temporize.svg)](https://jitpack.io/#h34tnet/temporize)
 
-```xml
-    <repositories>
-		<repository>
-		    <id>jitpack.io</id>
-		    <url>https://jitpack.io</url>
-		</repository>
-	</repositories> 
- 
-     <dependency>
- 	    <groupId>com.github.h34tnet</groupId>
- 	    <artifactId>temporize</artifactId>
- 	    <version>master-SNAPSHOT</version>
- 	</dependency>
-```
 ### maven plugin
 
-Add temporize as a plugin to your project; the `<execution>` adds it to your `compile` target.  
+Add temporize as a plugin to your project; the `<execution>` adds it to your `generate-sources` target.
+
+Note: The `org.codehaus.mojo.build-helper-maven-plugin` adds the `gen` directory to the sources. This is optional if you
+don't use a `src/gen/java` directory and add it to the main sources instead. 
 
 ```xml
-<build>
-    <plugins>
-        <plugin>
-            <groupId>net.h34t</groupId>
-            <artifactId>temporize</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <configuration>
-                <inputPath>${project.basedir}/tpl</inputPath>
-                <outputPath>${project.basedir}/src/main/java</outputPath>
-                <modifier>my.project.foobar.Modifiers</modifier>
-            </configuration>
-            <executions>
-                <execution>
-                    <phase>compile</phase>
-                    <goals>
-                        <goal>temporize</goal>
-                    </goals>
-                </execution>
-            </executions>
-        </plugin>
-    </plugins>
-</build>
+<project>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </pluginRepository>
+    </pluginRepositories>
+    <!-- (...) -->
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.github.h34tnet</groupId>
+                <artifactId>temporize</artifactId>
+                <version>release-1.0</version>
+                <configuration>
+                    <inputPath>${project.basedir}/tpl</inputPath>
+                    <outputPath>${project.basedir}/src/gen/java</outputPath>
+                    <modifier>my.project.foobar.Modifiers</modifier>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>temporize</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <id>add-source</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${basedir}/src/gen/java</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>        
+        </plugins>
+    </build>
+</project>
 ```
 
 Don't forget to substitute for your actual paths and packages.
