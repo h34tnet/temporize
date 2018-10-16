@@ -22,9 +22,15 @@ public class TemporizeMojo extends AbstractMojo {
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         getLog().info("Temporize template compilation");
-        Temporize.main(
-                inputPath,
-                outputPath,
-                modifier);
+        try {
+            new Temporize()
+                    .setLog(getLog())
+                    .exec(
+                            inputPath,
+                            outputPath,
+                            modifier);
+        } catch (Exception e) {
+            throw new MojoFailureException("An error occurred", e);
+        }
     }
 }
