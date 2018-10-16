@@ -182,22 +182,25 @@ Modifiers can't take arguments yet.
 
 ## Benchmark
 
-* It's fast. On my computer, the [github.com/mbosecke/template-benchmark)](https://github.com/mbosecke/template-benchmark)'s 
-  fastest engine is Rocker, with 49.738 ops/s. Temporize gets 77.176 ops/s.  
+* It's fast. On my computer, the 
+  [github.com/mbosecke/template-benchmark)](https://github.com/mbosecke/template-benchmark)'s fastest engine is 
+  Rocker, with 71.775 ops/s. Temporize gets 81.083 ops/s. (Note that this is with rather old versions, I couldn't get
+   the new ones to run yet.)
 
-# Run complete. Total time: 00:12:43
+```
+# Run complete. Total time: 00:11:33
 
-    Benchmark                     Mode  Cnt      Score      Error  Units
-    Freemarker.benchmark         thrpt   50  20358,267 ±   97,149  ops/s
-    Handlebars.benchmark         thrpt   50  23952,848 ±  177,972  ops/s
-    Mustache.benchmark           thrpt   50  26739,677 ±  156,825  ops/s
-    Pebble.benchmark             thrpt   50  41518,287 ± 1602,898  ops/s
-    Rocker.benchmark             thrpt   50  49738,370 ±  410,952  ops/s
-    TemporizeToString.benchmark  thrpt   50  77176,539 ±  791,690  ops/s
-    TemporizeWriter.benchmark    thrpt   50  76905,692 ±  311,332  ops/s
-    Thymeleaf.benchmark          thrpt   50   1912,023 ±   24,712  ops/s
-    Trimou.benchmark             thrpt   50  28922,202 ±  185,427  ops/s
-    Velocity.benchmark           thrpt   50  25620,993 ±  457,921  ops/s
+Benchmark              Mode  Cnt      Score      Error  Units
+Freemarker.benchmark  thrpt   50  20127,222 ±  148,179  ops/s
+Handlebars.benchmark  thrpt   50  21216,845 ±  181,726  ops/s
+Mustache.benchmark    thrpt   50  23079,937 ±  256,370  ops/s
+Pebble.benchmark      thrpt   50  36459,742 ±  568,967  ops/s
+Rocker.benchmark      thrpt   50  71775,191 ±  627,599  ops/s
+Temporize.benchmark   thrpt   50  81083,497 ±  689,571  ops/s
+Thymeleaf.benchmark   thrpt   50   1444,133 ±   32,324  ops/s
+Trimou.benchmark      thrpt   50  24249,006 ± 1018,244  ops/s
+Velocity.benchmark    thrpt   50  22656,509 ±  354,236  ops/s
+```
 
 ## How to use
 
@@ -249,7 +252,7 @@ don't use a `src/gen/java` directory and add it to the main sources instead.
             <plugin>
                 <groupId>com.github.h34tnet</groupId>
                 <artifactId>temporize</artifactId>
-                <version>release-1.0</version>
+                <version>release-1.1</version>
                 <configuration>
                     <inputPath>${project.basedir}/tpl</inputPath>
                     <outputPath>${project.basedir}/src/gen/java</outputPath>
