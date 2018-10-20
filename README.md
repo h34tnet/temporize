@@ -214,8 +214,6 @@ Velocity.benchmark    thrpt   50  23145,856 ± 160,639  ops/s
 > 
 > If you're looking for production use, I'd recommend Rocker over Temporize.   
  
- and has increased a lot since this 
-
 ## How to use
 
 ### Build locally
