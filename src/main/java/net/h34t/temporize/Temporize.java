@@ -11,7 +11,9 @@ import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class Temporize {
@@ -39,6 +41,8 @@ public class Temporize {
 
         PathMatcher pm = inDirectory.getFileSystem().getPathMatcher("glob:**/*.temporize.*");
 
+        Set<String> includes = new HashSet<>();
+
         // gather all template files and compile them
         List<CompiledTemplate> compiledTemplates = Files.find(inDirectory, 64, (f, a) -> pm.matches(f))
                 .map(t -> {
@@ -63,7 +67,10 @@ public class Temporize {
 
                         // compile
                         Template tpl = new Compiler().compile(packageName, className, modifier, root,
-                                inc -> log.info(" * Includes " + inc));
+                                inc -> {
+                                    log.info(" * Includes " + inc);
+                                    includes.add(inc);
+                                });
 
                         return new CompiledTemplate(tf, tpl, hash);
 
@@ -71,6 +78,18 @@ public class Temporize {
                         throw new RuntimeException(e);
                     }
                 }).collect(Collectors.toList());
+
+
+        Set<String> templateNames = compiledTemplates.stream()
+                .map(t -> t.template.packageName + "." + t.template.className)
+                .collect(Collectors.toSet());
+
+        Set<String> missingIncludes = new HashSet<>(includes);
+        missingIncludes.removeAll(templateNames);
+
+        if (!missingIncludes.isEmpty()) {
+            throw new RuntimeException("There are missing includes: " + String.join(", ", missingIncludes));
+        }
 
         // validate and/or create output directory
         if (Files.exists(outDirectory)) {
