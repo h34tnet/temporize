@@ -4,11 +4,14 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class CompilerTest {
     @Test
-    public void createSetter() throws Exception {
+    public void createSetter() {
         String setter = Compiler.createSetter("Temporize", "String", "foo", 0);
         Assert.assertEquals("    public Temporize setFoo(String foo) {\n" +
                 "        this.foo = foo;\n" +
@@ -155,5 +158,25 @@ public class CompilerTest {
         ), s -> {
         });
     }
+
+    @Test
+    public void compileConditionalBlock() throws IOException {
+        new Compiler().compile("foo", "Bar", null, new ASTBuilder().build(
+                Parser.FULL.parse("{if $block}{for $block}{$hello}{/for}{/if}")
+        ), s -> {
+        });
+    }
+
+    @Test
+    public void compileConditionalInclude() throws IOException {
+        Set<String> includes = new HashSet<>();
+
+        new Compiler().compile("foo", "Bar", null, new ASTBuilder().build(
+                Parser.FULL.parse("{if $inc}{include foo.bar.Baz as $inc}{/if}")
+        ), includes::add);
+
+        Assert.assertEquals(Collections.singleton("foo.bar.Baz"), includes);
+    }
+
 
 }

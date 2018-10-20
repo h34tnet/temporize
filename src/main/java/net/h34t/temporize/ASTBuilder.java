@@ -33,10 +33,10 @@ public class ASTBuilder {
 
             } else if (token instanceof Token.Block) {
                 // create a block and a NOP that can be used as a new current
-                ASTNode block = new ASTNode.Block(previous, ((Token.Block) token).blockName);
+                ASTNode.Block block = new ASTNode.Block(previous, ((Token.Block) token).blockName);
                 previous.setNext(block);
                 ASTNode branch = new ASTNode.NoOp(block);
-                ((ASTNode.Block) block).setBranch(branch);
+                block.setBranch(branch);
                 current = branch;
 
                 // add the block to the stack
@@ -45,8 +45,8 @@ public class ASTBuilder {
             } else if (token instanceof Token.BlockEnd) {
                 // and end block doesn't generate its own AST node
 
-                if (!(stack.peek() instanceof ASTNode.Block))
-                    throw new MismatchedBranchException("Block End without corresponding Block Opener at " + token.line + ":" + token.offs);
+                if (stack.empty() || !(stack.peek() instanceof ASTNode.Block))
+                    throw new UnmatchedBlockException("Block End without corresponding Block Opener at " + token.line + ":" + token.offs);
 
                 current = stack.pop();
 
@@ -88,7 +88,7 @@ public class ASTBuilder {
         }
 
         if (!stack.empty() && stack.peek() instanceof ASTNode.Block) {
-            throw new MismatchedBranchException("Leftover unclosed block.");
+            throw new UnmatchedBlockException("Leftover unclosed block.");
         }
 
         if (!stack.empty() && stack.peek() instanceof ASTNode.Conditional) {
@@ -104,4 +104,9 @@ public class ASTBuilder {
         }
     }
 
+    public static class UnmatchedBlockException extends RuntimeException {
+        UnmatchedBlockException(String message) {
+            super(message);
+        }
+    }
 }

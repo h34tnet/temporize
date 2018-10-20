@@ -4,7 +4,7 @@ import org.junit.Test;
 
 public class TokenTest {
     @Test
-    public void checkValidity() throws Exception {
+    public void checkValidity() {
         new Token.Variable("{$foo}", "foo", "", "unknown", 1, 0);
     }
 

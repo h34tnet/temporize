@@ -58,7 +58,7 @@ public class ParserTest {
     }
 
     @Test
-    public void testParseLine() throws Exception {
+    public void testParseLine() {
         List<Token> tokens = Parser.FULL.parseLine("<html>{$value}</html>", 0);
         testTokens(tokens);
     }

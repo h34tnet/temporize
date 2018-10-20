@@ -1,7 +1,6 @@
 package net.h34t.temporize;
 
 import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -20,7 +19,7 @@ public class TemporizeMojo extends AbstractMojo {
     private String modifier;
 
     @Override
-    public void execute() throws MojoExecutionException, MojoFailureException {
+    public void execute() throws MojoFailureException {
         getLog().info("Temporize template compilation");
         try {
             new Temporize()

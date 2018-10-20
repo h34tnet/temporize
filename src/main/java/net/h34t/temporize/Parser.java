@@ -1,6 +1,14 @@
 package net.h34t.temporize;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.LineNumberReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
@@ -55,11 +63,22 @@ public class Parser {
     }
 
     /**
+     * Parses the contents of a java.nio.Path into a list of tokens
+     *
+     * @param path the File to read
+     * @return the list of tokens
+     * @throws IOException on read errors or if the File doesn't exist
+     */
+    public List<Token> parse(Path path) throws IOException {
+        return parse(path.toAbsolutePath().toString(), Files.newInputStream(path));
+    }
+
+    /**
      * Parses a String into a list of tokens
      *
      * @param contents the String to parse
      * @return the list of tokens
-     * @throws IOException
+     * @throws IOException on read errors
      */
     public List<Token> parse(String contents) throws IOException {
         return parse("?string", new ByteArrayInputStream(contents.getBytes()));

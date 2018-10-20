@@ -1,9 +1,9 @@
 package net.h34t.temporize;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * Helper class that represents an un-compiled source template to simplify filename to classname conversions.
@@ -11,20 +11,29 @@ import java.util.regex.Pattern;
 public class TemplateFile {
 
     /**
-     * the path separator (e.g. "/" on *nix and "\" on windows) encoded to be used in a regular expression.
+     * The base directory where all templates are
      */
-    private static final String PATH_SEPARATOR_REGEXP = Pattern.quote(File.separator);
+    private final Path templateDirectory;
 
-    private final File templateDirectory;
-    private final File templateFile;
+    /**
+     * The input temporize template file
+     */
+    private final Path templateFile;
 
-    public TemplateFile(File templateDirectory, File templateFile) {
+    private final String packageName;
+
+    public TemplateFile(Path templateDirectory, Path templateFile) {
         this.templateDirectory = templateDirectory;
         this.templateFile = templateFile;
+        this.packageName = createPackageName();
     }
 
-    public File getFile() {
+    public Path getFile() {
         return this.templateFile;
+    }
+
+    public String getPackageName() {
+        return packageName;
     }
 
     /**
@@ -35,27 +44,41 @@ public class TemplateFile {
      *
      * @return the package name depending on the directory structure.
      */
-    public String getPackageName() {
-        String directoryPath = templateFile.getParentFile().getPath();
-        Path baseDirectory = Paths.get(directoryPath);
-        Path tplDirectory = Paths.get(templateDirectory.getPath());
+    String createPackageName() {
+        Path baseDirectory = templateFile.getParent();
 
-        if (baseDirectory.equals(tplDirectory)) {
-            throw new RuntimeException("Please move " + templateFile.getName() + " into a subdirectory. This is needed to generate a package name.");
+        if (baseDirectory.equals(templateDirectory)) {
+            throw new RuntimeException("Please move " + templateFile.getFileName().toString() + " into a subdirectory. This " +
+                    "is needed to " +
+                    "generate a package name.");
         }
 
-        return directoryPath.substring(templateDirectory.getPath().length() + 1)
-                .replaceAll(PATH_SEPARATOR_REGEXP, ".");
+        Path relativePath = templateDirectory.relativize(baseDirectory);
+
+        return StreamSupport.stream(relativePath.spliterator(), false)
+                .peek(part -> {
+                    if (ReservedWords.RESERVED_WORDS.contains(part.toString())) {
+                        throw new RuntimeException("Package contains reserved keyword: " + part.toString());
+                    }
+                })
+                .map(Path::toString)
+                .collect(Collectors.joining("."));
     }
 
     /**
-     * Note: this discards everything after the first ".".
+     * Note: this discards everything after the first ".". This might lead to collisions when files have the same name
+     * but a different ending.
      *
-     * @return the File name turned into a className
+     * @return the file name turned into a className
      */
     public String getClassName() {
-        String name = this.templateFile.getName();
-        return Utils.ucFirst(name.substring(0, name.indexOf(".")));
+        String name = this.templateFile.getFileName().toString();
+        String filename = Utils.ucFirst(name.substring(0, name.indexOf(".")));
+
+        if (filename.isEmpty())
+            throw new RuntimeException("Invalid template name");
+
+        return filename;
     }
 
     /**
@@ -64,10 +87,8 @@ public class TemplateFile {
      * @param outputBase the src directory where to store the java files
      * @return a File representing the directory where to store the java file
      */
-    public File getOutputDirectory(File outputBase) {
-        return getPackageName() == null
-                ? outputBase
-                : new File(outputBase, getPackageName().replaceAll("\\.", "/"));
+    public Path getOutputDirectory(Path outputBase) {
+        return outputBase.resolve(Paths.get("", packageName.split("\\.")));
     }
 
     /**
@@ -76,7 +97,7 @@ public class TemplateFile {
      * @param outputBase the src directory where to store the java files
      * @return a file representing the file path and name of the template
      */
-    public File getOutputFile(File outputBase) {
-        return new File(getOutputDirectory(outputBase), getClassName() + ".java");
+    public Path getOutputFile(Path outputBase) {
+        return getOutputDirectory(outputBase).resolve(getClassName() + ".java");
     }
 }

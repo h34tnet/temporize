@@ -68,7 +68,7 @@ public class ASTBuilderTest {
         new ASTBuilder().build(tokens);
     }
 
-    @Test(expected = ASTBuilder.MismatchedBranchException.class)
+    @Test(expected = ASTBuilder.UnmatchedBlockException.class)
     public void buildMismatchedBranches2() throws Exception {
         List<Token> tokens = Parser.FULL.parse("{if $foo}{$bar}{/for}");
         new ASTBuilder().build(tokens);
@@ -80,9 +80,18 @@ public class ASTBuilderTest {
         new ASTBuilder().build(tokens);
     }
 
-
     @Test(expected = ASTBuilder.MismatchedBranchException.class)
     public void testParseConditionalsMissingEndIf() throws IOException {
         new ASTBuilder().build(Parser.FULL.parse("{if $boo}boo{else}far"));
+    }
+
+    @Test(expected = ASTBuilder.UnmatchedBlockException.class)
+    public void testParseForUnclosedBlock() throws IOException {
+        new ASTBuilder().build(Parser.FULL.parse("{for $boo}boo"));
+    }
+
+    @Test(expected = ASTBuilder.UnmatchedBlockException.class)
+    public void testParseForUnmatchedBlock() throws IOException {
+        new ASTBuilder().build(Parser.FULL.parse("boo{/for}bar"));
     }
 }

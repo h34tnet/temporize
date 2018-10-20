@@ -7,7 +7,7 @@
     <groupId>com.github.h34tnet</groupId>
     <artifactId>temporize</artifactId>
     <packaging>maven-plugin</packaging>
-    <version>release-1.0</version>
+    <version>1.1.1</version>
 
     <name>temporize</name>
 
@@ -59,8 +59,9 @@
                         </goals>
                         <configuration>
                             <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>net.h34t.temporize.Temporize</mainClass>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>net.h34t.temporize.CliRunner</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>

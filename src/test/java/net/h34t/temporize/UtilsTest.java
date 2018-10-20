@@ -8,37 +8,37 @@ import java.util.Collections;
 
 public class UtilsTest {
     @Test
-    public void containsDuplicates() throws Exception {
+    public void containsDuplicates() {
         Assert.assertTrue(Utils.containsDuplicates(Arrays.asList("a", "a")));
     }
 
     @Test
-    public void containsDuplicatesSpecialEmpty() throws Exception {
+    public void containsDuplicatesSpecialEmpty() {
         Assert.assertFalse(Utils.containsDuplicates(Collections.emptyList()));
     }
 
     @Test
-    public void containsDuplicatesSpecialNull() throws Exception {
+    public void containsDuplicatesSpecialNull() {
         Assert.assertFalse(Utils.containsDuplicates(null));
     }
 
     @Test
-    public void containsDuplicatesOneElement() throws Exception {
+    public void containsDuplicatesOneElement() {
         Assert.assertFalse(Utils.containsDuplicates(Collections.singletonList("a")));
     }
 
     @Test
-    public void containsDuplicatesNegative() throws Exception {
+    public void containsDuplicatesNegative() {
         Assert.assertFalse(Utils.containsDuplicates(Arrays.asList("a", "b", "c")));
     }
 
     @Test
-    public void containsDuplicatesNegative2() throws Exception {
+    public void containsDuplicatesNegative2() {
         Assert.assertFalse(Utils.containsDuplicates(Arrays.asList("a", "A")));
     }
 
     @Test
-    public void ucFirst() throws Exception {
+    public void ucFirst() {
         Assert.assertEquals("Foo", Utils.ucFirst("foo"));
         Assert.assertEquals("Foo", Utils.ucFirst("Foo"));
         Assert.assertEquals("F", Utils.ucFirst("f"));
@@ -48,7 +48,7 @@ public class UtilsTest {
     }
 
     @Test
-    public void toClassName() throws Exception {
+    public void toClassName() {
         ucFirst();
     }
 

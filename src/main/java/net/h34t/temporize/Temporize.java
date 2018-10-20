@@ -3,67 +3,19 @@ package net.h34t.temporize;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugin.logging.SystemStreamLog;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.PathMatcher;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Temporize {
 
     private Log log;
-
-    public static void main(String... args) {
-        boolean verbose = false;
-
-        try {
-            if (args.length < 2) {
-                System.out.println("Usage: java -jar temporize.jar tpl/ output/ path/to/Modifiers.java");
-                System.out.println("       Compiles all templates with a file name according to the pattern");
-                System.out.println("       [name].temporize.[ending] into precompiled templates and saves");
-                System.out.println("       the java source files to output.");
-
-            } else {
-                String inDir = args[0];
-                String outDir = args[1];
-                String modifier = args.length > 2 ? args[2] : null;
-                verbose = Arrays.asList(args).contains("--verbose");
-
-                new Temporize().exec(inDir, outDir, modifier);
-            }
-
-        } catch (Exception e) {
-            System.err.println("An error occurred: " + e.getMessage());
-
-            if (verbose)
-                e.printStackTrace();
-
-            System.exit(1);
-        }
-    }
-
-    private static List<File> findFilesRecursively(File directory) {
-        List<File> templates = new ArrayList<>();
-
-        File[] files = directory.listFiles();
-
-        if (files != null) {
-            for (File file : files) {
-                if (file.isFile() && file.getName().matches("^.+\\.temporize\\..*$")) {
-                    templates.add(file);
-
-                } else if (file.isDirectory()) {
-                    templates.addAll(findFilesRecursively(file));
-                }
-            }
-        }
-
-        return templates;
-    }
 
     public Temporize setLog(Log log) {
         this.log = log;
@@ -76,53 +28,25 @@ public class Temporize {
 
         long st = System.nanoTime();
 
-        File inDirectory = new File(inDir);
-        File outDirectory = new File(outDir);
+        Path inDirectory = Paths.get(inDir);
+        Path outDirectory = Paths.get(outDir);
 
-
-        if (!inDirectory.exists()) {
-            log.error("Couldn't find input directory " + inDirectory.getName());
-            System.exit(1);
+        // validate import directory
+        if (!Files.exists(inDirectory) || !Files.isDirectory(inDirectory)) {
+            throw new RuntimeException("Couldn't find input directory " + inDirectory.toString());
         }
 
-        if ((!outDirectory.exists() && !outDirectory.mkdirs()) || !outDirectory.isDirectory()) {
-            log.error("Couldn't create output directory " + outDirectory.getName());
-            System.exit(1);
-        }
+        PathMatcher pm = inDirectory.getFileSystem().getPathMatcher("glob:**/*.temporize.*");
 
-        File temporizeDirectory = new File(outDirectory, "temporize");
-        if (!temporizeDirectory.exists()) {
-            if (!temporizeDirectory.mkdir())
-                throw new IOException("Can't create temporize interface directory");
-        }
-
-        // copy the TemporizeTemplate file from the packaged resources into the output directory
-        // but only if it doesn't exist yet
-        File temporizeInterface = new File(temporizeDirectory, "TemporizeTemplate.java");
-
-        if (!temporizeInterface.exists()) {
-            try (InputStream is = Temporize.class.getClassLoader().getResourceAsStream("TemporizeTemplate.java");
-                 OutputStream os = new FileOutputStream(temporizeInterface)) {
-                byte[] buffer = new byte[1024];
-                int bytesRead;
-                while ((bytesRead = is.read(buffer)) != -1) {
-                    os.write(buffer, 0, bytesRead);
-                }
-            }
-        }
-
-        // gather all template files
-        List<File> templates = findFilesRecursively(inDirectory);
-
-        // compile each template
-        templates
-                .forEach(t -> {
+        // gather all template files and compile them
+        List<CompiledTemplate> compiledTemplates = Files.find(inDirectory, 64, (f, a) -> pm.matches(f))
+                .map(t -> {
                     TemplateFile tf = new TemplateFile(inDirectory, t);
 
-                    log.info("processing " + tf.getFile().getPath());
+                    log.info("processing " + tf.getFile().toString());
 
                     try {
-                        String packageName = tf.getPackageName();
+                        String packageName = tf.createPackageName();
                         String className = tf.getClassName();
 
                         log.info(String.format("Class: %s.%s", packageName, className));
@@ -137,25 +61,83 @@ public class Temporize {
                         Template tpl = new Compiler().compile(packageName, className, modifier, root,
                                 inc -> log.info(" * Includes " + inc));
 
-                        // create the output directory
-                        File packageOutDirectory = tf.getOutputDirectory(outDirectory);
-                        if (!packageOutDirectory.exists() && !packageOutDirectory.mkdirs()) {
-                            throw new IOException("Failed creating package directory " + packageOutDirectory.getPath());
-                        }
-
-                        // write the template to a java source file
-                        try (FileWriter fw = new FileWriter(tf.getOutputFile(outDirectory))) {
-                            fw.write(tpl.code);
-                        }
+                        return new CompiledTemplate(tf, tpl);
 
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
+                }).collect(Collectors.toList());
+
+        // validate and/or create output directory
+        if (Files.exists(outDirectory)) {
+            if (!Files.isDirectory(outDirectory))
+                throw new RuntimeException("Output destination " + outDirectory.toString() + " is not a directory");
+
+        } else if (!Files.exists(outDirectory)) {
+            try {
+                Files.createDirectories(outDirectory);
+            } catch (IOException ioe) {
+                throw new RuntimeException("Couldn't create output directory " + outDirectory.toString() + ": " + ioe.getMessage());
+            }
+        }
+
+        Path temporizeDirectory = outDirectory.resolve("net/h34t/temporize");
+        if (!Files.exists(temporizeDirectory)) {
+            try {
+                Files.createDirectories(temporizeDirectory);
+            } catch (IOException ioe) {
+                throw new IOException("Can't create temporize interface directory");
+            }
+        }
+
+        // copy the TemporizeTemplate file from the packaged resources into the output directory
+        // but only if it doesn't exist yet
+        Path temporizeInterface = temporizeDirectory.resolve("TemporizeTemplate.java");
+
+        if (!Files.exists(temporizeInterface)) {
+            Files.copy(
+                    Temporize.class.getClassLoader().getResourceAsStream("net/h34t/temporize/TemporizeTemplate.java"),
+                    temporizeInterface);
+        }
+
+        // first, try to create all output directories
+        compiledTemplates.stream()
+                .map(ct -> ct.templateFile.getOutputDirectory(outDirectory))
+                .distinct()
+                .forEach(dir -> {
+                    try {
+                        Files.createDirectories(dir);
+                    } catch (IOException e) {
+                        throw new RuntimeException("Failed to create output directory " + dir, e);
+                    }
                 });
+
+        // finally, create all files
+        compiledTemplates.forEach(t -> {
+            try {
+                Path file = t.templateFile.getOutputFile(outDirectory);
+                Files.write(file, t.template.code.getBytes(StandardCharsets.UTF_8),
+                        StandardOpenOption.CREATE,
+                        StandardOpenOption.TRUNCATE_EXISTING,
+                        StandardOpenOption.WRITE);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed writing the output files", e);
+            }
+        });
 
         long et = System.nanoTime();
 
         log.info("Done. Took " + (et - st) / 1_000_000 + "ms");
     }
 
+    private static class CompiledTemplate {
+
+        final TemplateFile templateFile;
+        final Template template;
+
+        CompiledTemplate(TemplateFile templateFile, Template template) {
+            this.templateFile = templateFile;
+            this.template = template;
+        }
+    }
 }
