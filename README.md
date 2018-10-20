@@ -168,10 +168,6 @@ public class Test {
 }
 ```
 
-or, for example
-
-
-
 You still have to provide a `my.Modifiers` class with the used String -> String 
 methods - in the example `html`, `stripnl` and `ellipsize80`.
 
@@ -195,23 +191,31 @@ Modifiers can't take arguments yet.
 ## Benchmark
 
 * It's fast. On my computer, the [github.com/mbosecke/template-benchmark)](https://github.com/mbosecke/template-benchmark)'s 
-  fastest engine is Rocker, with 49.738 ops/s. Temporize gets 77.176 ops/s.  
+  fastest engine is [Rocker](https://github.com/fizzed/rocker), with 72.903 ops/s. Temporize gets 82.395ops/s.  
 
 ```
-# Run complete. Total time: 00:12:43
+# Run complete. Total time: 00:11:32
 
-Benchmark                     Mode  Cnt      Score      Error  Units
-Freemarker.benchmark         thrpt   50  20358,267 ±   97,149  ops/s
-Handlebars.benchmark         thrpt   50  23952,848 ±  177,972  ops/s
-Mustache.benchmark           thrpt   50  26739,677 ±  156,825  ops/s
-Pebble.benchmark             thrpt   50  41518,287 ± 1602,898  ops/s
-Rocker.benchmark             thrpt   50  49738,370 ±  410,952  ops/s
-TemporizeToString.benchmark  thrpt   50  77176,539 ±  791,690  ops/s
-TemporizeWriter.benchmark    thrpt   50  76905,692 ±  311,332  ops/s
-Thymeleaf.benchmark          thrpt   50   1912,023 ±   24,712  ops/s
-Trimou.benchmark             thrpt   50  28922,202 ±  185,427  ops/s
-Velocity.benchmark           thrpt   50  25620,993 ±  457,921  ops/s
+Benchmark              Mode  Cnt      Score     Error  Units
+Freemarker.benchmark  thrpt   50  19362,583 ± 522,458  ops/s
+Handlebars.benchmark  thrpt   50  21247,319 ± 586,688  ops/s
+Mustache.benchmark    thrpt   50  23228,965 ± 279,113  ops/s
+Pebble.benchmark      thrpt   50  34855,337 ± 304,129  ops/s
+Rocker.benchmark      thrpt   50  73244,777 ± 366,655  ops/s
+Temporize.benchmark   thrpt   50  82259,467 ± 310,212  ops/s
+Thymeleaf.benchmark   thrpt   50   5932,226 ±  95,475  ops/s
+Trimou.benchmark      thrpt   50  26623,900 ± 232,096  ops/s
+Velocity.benchmark    thrpt   50  23145,856 ± 160,639  ops/s
 ```
+
+> **Note:** Rocker uses the same principle (precompilation). I didn't know about it when I started
+  this project. While Rocker was slower in the beginning it now is almost as fast as Temporize (a negligible 
+  difference) but much more fully featured. 
+> 
+> If you're looking for production use, I'd recommend Rocker over Temporize.   
+ 
+ and has increased a lot since this 
+
 ## How to use
 
 ### Build locally
