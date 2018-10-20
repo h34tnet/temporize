@@ -191,7 +191,7 @@ Modifiers can't take arguments yet.
 ## Benchmark
 
 * It's fast. On my computer, the [github.com/mbosecke/template-benchmark)](https://github.com/mbosecke/template-benchmark)'s 
-  fastest engine is [Rocker](https://github.com/fizzed/rocker), with 72.903 ops/s. Temporize gets 82.395ops/s.  
+  fastest engine is [Rocker](https://github.com/fizzed/rocker), with ~73.000 ops/s. Temporize gets ~82.000ops/s.  
 
 ```
 # Run complete. Total time: 00:11:32
@@ -310,13 +310,13 @@ Don't forget to substitute for your actual paths and packages.
 ## Known bugs and TODOs
 
 * Stricter line ending handling. Currently only linux `\n` are generated, `\r`s are lost. 
-* Sanity checks for invalid variable and method names defined in templates.
 * Add file existence check for `include`s. 
 * Add stricter handling of file encodings.
-* Clean up leftover java files from removed/renamed templates.
 * Add option for debug output (--verbose) to the mojo plugin.
 * Modifier arguments?
 
+* Sanity checks for invalid variable and method names defined in templates. (mostly done)
+* Clean up leftover java files from removed/renamed templates. (done)
 * Publish on ~~maven central and/or~~ jitpack (done)
 * Implement multi line `skip` and `comment` (done)
 
