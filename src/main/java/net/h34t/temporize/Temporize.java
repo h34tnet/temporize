@@ -3,6 +3,7 @@ package net.h34t.temporize;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugin.logging.SystemStreamLog;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -52,7 +53,10 @@ public class Temporize {
                         log.info(String.format("Class: %s.%s", packageName, className));
 
                         // parse source file
-                        List<Token> tokens = Parser.FULL.parse(t);
+                        // ParseResult tokens = Parser.FULL.parse(t);
+                        ParseResult tokens = Parser.FULL.parse(t);
+
+                        byte[] hash = tokens.getHash();
 
                         // build AST
                         ASTNode root = new ASTBuilder().build(tokens);
@@ -61,7 +65,7 @@ public class Temporize {
                         Template tpl = new Compiler().compile(packageName, className, modifier, root,
                                 inc -> log.info(" * Includes " + inc));
 
-                        return new CompiledTemplate(tf, tpl);
+                        return new CompiledTemplate(tf, tpl, hash);
 
                     } catch (IOException e) {
                         throw new RuntimeException(e);
@@ -72,6 +76,8 @@ public class Temporize {
         if (Files.exists(outDirectory)) {
             if (!Files.isDirectory(outDirectory))
                 throw new RuntimeException("Output destination " + outDirectory.toString() + " is not a directory");
+
+            cleanUp(outDirectory);
 
         } else if (!Files.exists(outDirectory)) {
             try {
@@ -116,10 +122,17 @@ public class Temporize {
         compiledTemplates.forEach(t -> {
             try {
                 Path file = t.templateFile.getOutputFile(outDirectory);
-                Files.write(file, t.template.code.getBytes(StandardCharsets.UTF_8),
+
+                String output =
+                        String.format("/* $TEMPORIZE$SOURCE-HASH:%s */%n", Hexer.getHex(t.hash))
+                                + "/* Auto-generated file: no not edit, changes will be lost */\n"
+                                + t.template.code;
+
+                Files.write(file, output.getBytes(StandardCharsets.UTF_8),
                         StandardOpenOption.CREATE,
                         StandardOpenOption.TRUNCATE_EXISTING,
                         StandardOpenOption.WRITE);
+
             } catch (IOException e) {
                 throw new RuntimeException("Failed writing the output files", e);
             }
@@ -130,14 +143,36 @@ public class Temporize {
         log.info("Done. Took " + (et - st) / 1_000_000 + "ms");
     }
 
+    void cleanUp(Path directory) throws IOException {
+        PathMatcher pm = directory.getFileSystem().getPathMatcher("glob:**/*.java");
+
+        Files.find(directory, 255, (f, a) -> pm.matches(f))
+                .forEach(f -> {
+
+                    try (BufferedReader reader = Files.newBufferedReader(f)) {
+                        String line = reader.readLine();
+
+                        if (line.startsWith("/* $TEMPORIZE")) {
+                            reader.close();
+                            Files.delete(f);
+                        }
+
+                    } catch (IOException e) {
+                        throw new RuntimeException("Failed to read or delete compiled template " + f.toString(), e);
+                    }
+                });
+    }
+
     private static class CompiledTemplate {
 
         final TemplateFile templateFile;
         final Template template;
+        final byte[] hash;
 
-        CompiledTemplate(TemplateFile templateFile, Template template) {
+        CompiledTemplate(TemplateFile templateFile, Template template, byte[] hash) {
             this.templateFile = templateFile;
             this.template = template;
+            this.hash = hash;
         }
     }
 }

@@ -9,6 +9,8 @@ import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
@@ -58,7 +60,7 @@ public class Parser {
      * @return the list of tokens
      * @throws IOException on read errors or if the File doesn't exist
      */
-    public List<Token> parse(File file) throws IOException {
+    public ParseResult parse(File file) throws IOException {
         return parse(file.getName(), new FileInputStream(file));
     }
 
@@ -69,7 +71,7 @@ public class Parser {
      * @return the list of tokens
      * @throws IOException on read errors or if the File doesn't exist
      */
-    public List<Token> parse(Path path) throws IOException {
+    public ParseResult parse(Path path) throws IOException {
         return parse(path.toAbsolutePath().toString(), Files.newInputStream(path));
     }
 
@@ -80,7 +82,7 @@ public class Parser {
      * @return the list of tokens
      * @throws IOException on read errors
      */
-    public List<Token> parse(String contents) throws IOException {
+    public ParseResult parse(String contents) throws IOException {
         return parse("?string", new ByteArrayInputStream(contents.getBytes()));
     }
 
@@ -91,7 +93,7 @@ public class Parser {
      * @return the list of tokens
      * @throws IOException on read errors
      */
-    public List<Token> parse(InputStream is) throws IOException {
+    public ParseResult parse(InputStream is) throws IOException {
         return parse("?stream", is);
     }
 
@@ -103,12 +105,20 @@ public class Parser {
      * @return the list of tokens
      * @throws IOException on read errors
      */
-    protected List<Token> parse(String source, InputStream is) throws IOException {
+    protected ParseResult parse(String source, InputStream is) throws IOException {
+        MessageDigest digest;
+        try {
+            digest = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+
         List<Token> tokens = new ArrayList<>();
 
         try (LineNumberReader reader = new LineNumberReader(new InputStreamReader(is))) {
             String line;
             while ((line = reader.readLine()) != null) {
+                digest.update(line.getBytes());
                 tokens.addAll(parseLine(line + (reader.ready() ? "\n" : ""), source, reader.getLineNumber()));
             }
 
@@ -117,8 +127,9 @@ public class Parser {
                     .filter(token -> !(token instanceof Token.Comment))
                     .collect(Collectors.toList());
 
+
             // join consecutive literal tokens
-            return join(tokens);
+            return new ParseResult(join(tokens), digest.digest());
         }
     }
 
