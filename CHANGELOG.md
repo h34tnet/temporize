@@ -6,6 +6,8 @@
 * Adds checks to prevent the use of reserved words in package names.
 * Changes almost all File Operations from `java.io` to `java.nio`.
 * Moves static void main(...) to class CliRunner
+* Removes old compiled templates before compiling anew. This gets rid of java files
+  originating from moved or renamed templates. 
 
 ## release-1.1
 
