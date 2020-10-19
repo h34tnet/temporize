@@ -1,5 +1,10 @@
 # Release change log
 
+## Version 1.1.2
+
+* Makes output directory optional, defines default as "{$project.build-directory}/generated-sources/temporize"
+* Changes goal name to "generate-templates"
+
 ## Version 1.1.1
 
 * Writes classes only after all templates compiled successfully.
