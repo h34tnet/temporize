@@ -87,10 +87,10 @@ import static my.Modifiers.*;
 
 class MyTemplate {
     private String title = "";
-    private String headline = "";
+    private final String headline = "";
     private boolean showIntroduction;
-    private String introduction = "";
-    private List<Point> pointList = new ArrayList<>();
+    private final String introduction = "";
+    private final List<Point> pointList = new ArrayList<>();
     private inc.Footer footer; 
     
     public MyTemplate() {}
@@ -238,17 +238,13 @@ files with a `.temporize.` in the name are processed.
 
  `java -jar temporize.jar tpl/ src_gen/ package.name.of.Modifiers`
  
- 
-#### jitpack
+ #### jitpack
 
 [![](https://jitpack.io/v/h34tnet/temporize.svg)](https://jitpack.io/#h34tnet/temporize)
 
 ### maven plugin
 
 Add temporize as a plugin to your project; the `<execution>` adds it to your `generate-sources` target.
-
-Note: The `org.codehaus.mojo.build-helper-maven-plugin` adds the `gen` directory to the sources. This is optional if you
-don't use a `src/gen/java` directory and add it to the main sources instead. 
 
 ```xml
 <project>
@@ -267,37 +263,21 @@ don't use a `src/gen/java` directory and add it to the main sources instead.
                 <version>release-1.1.1</version>
                 <configuration>
                     <inputPath>${project.basedir}/tpl</inputPath>
-                    <outputPath>${project.basedir}/src/gen/java</outputPath>
+                    <!-- Optional, this is the default output directory -->
+                    <outputPath>${project.build.directory}/generated-sources/temporize</outputPath>
                     <modifier>my.project.foobar.Modifiers</modifier>
                 </configuration>
                 <executions>
                     <execution>
+                        <id>temporize</id>
+                        <!-- Optional -->
                         <phase>generate-sources</phase>
                         <goals>
-                            <goal>temporize</goal>
+                            <goal>generate-templates</goal>
                         </goals>
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <version>3.0.0</version>
-                <executions>
-                    <execution>
-                        <id>add-source</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>add-source</goal>
-                        </goals>
-                        <configuration>
-                            <sources>
-                                <source>${basedir}/src/gen/java</source>
-                            </sources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>        
         </plugins>
     </build>
 </project>

@@ -6,10 +6,12 @@
 
     <groupId>com.github.h34tnet</groupId>
     <artifactId>temporize</artifactId>
-    <packaging>maven-plugin</packaging>
-    <version>1.1.1</version>
-    <name>temporize</name>
+    <version>1.1.2</version>
 
+    <packaging>maven-plugin</packaging>
+
+    <name>temporize</name>
+    <description>The temporize template engine.</description>
     <url>https://github.com/h34tnet/temporize</url>
 
     <licenses>
@@ -73,6 +75,12 @@
     <dependencies>
         <dependency>
             <groupId>org.apache.maven</groupId>
+            <artifactId>maven-project</artifactId>
+            <version>2.2.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.maven</groupId>
             <artifactId>maven-plugin-api</artifactId>
             <version>3.0</version>
         </dependency>
@@ -100,7 +108,7 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.12</version>
+            <version>4.13.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
