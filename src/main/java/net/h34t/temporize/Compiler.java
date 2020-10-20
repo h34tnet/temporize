@@ -181,7 +181,6 @@ public class Compiler {
 
         } else {
             throw new RuntimeException("Undefined ASTNode " + node.getClass().getName());
-
         }
     }
 

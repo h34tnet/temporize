@@ -260,7 +260,7 @@ Add temporize as a plugin to your project; the `<execution>` adds it to your `ge
             <plugin>
                 <groupId>com.github.h34tnet</groupId>
                 <artifactId>temporize</artifactId>
-                <version>release-1.1.2</version>
+                <version>release-1.1.3</version>
                 <configuration>
                     <inputPath>${project.basedir}/tpl</inputPath>
                     <!-- Optional, this is the default output directory -->
